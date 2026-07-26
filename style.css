@@ -1,0 +1,88 @@
+/* 画面全体の設定 */
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    /* 画面全体でFlexboxを有効にして上下左右中央にする */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #222;
+    color: white;
+    font-family: sans-serif;
+}
+
+/* タイトル、メッセージ、ボタンが入る箱 */
+.container {
+    display: flex;
+    flex-direction: column; /* 縦並び */
+    align-items: center;    /* 左右中央揃え */
+    gap: 20px;              /* 要素同士の間隔 */
+}
+
+/* 文字の装飾 */
+h1 {
+    text-align: center;
+    margin: 0;
+    font-size: 2rem;
+}
+
+button {
+    padding: 15px 40px;
+    font-size: 20px;
+    background-color: #ff4500;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+/* メニューリストのボタン配置 */
+.menu-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* ボタン同士の間隔 */
+    width: 100%;
+    max-width: 300px; /* スマホで見やすい幅 */
+}
+
+/* 各メニューボタンを統一サイズに */
+.menu-list button {
+    width: 100%;
+    padding: 20px;
+    font-size: 18px;
+    background-color: #444; /* 基地らしく少し落ち着いた色に */
+    border: 1px solid #ff4500;
+}
+
+/* 戻るボタンだけ少し小さく目立たなく */
+.back-btn {
+    background-color: transparent !important;
+    border: 1px solid white !important;
+    padding: 10px 20px !important;
+    font-size: 14px !important;
+}
+
+/* ステータス表示パネルの設定 */
+.status-panel {
+    width: 100%;
+    max-width: 300px;
+    height: 300px; /* 高さを固定 */
+    overflow-y: auto; /* 溢れたらスクロール */
+    background: #1a1a1a;
+    padding: 20px;
+    border: 2px solid #555;
+    text-align: left;
+}
+
+.status-item {
+    padding: 10px 0;
+    border-bottom: 1px solid #333;
+}
+
+.action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}

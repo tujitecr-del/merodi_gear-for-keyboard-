@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <script src="robot_rules.js"></script>
+    <script src="robot_manager.js"></script>
+
+    <meta charset="UTF-8">
+    <title>機体改造 - メロディーギア</title>
+    <style>
+        body { background: #111; color: #fff; font-family: sans-serif; padding: 20px; }
+        .control { margin-bottom: 15px; }
+        .invalid { color: red; }
+    </style>
+</head>
+<body>
+    <h2>機体改造: <span id="robotName"></span></h2>
+    <div>最大レベル(総ポイント): <span id="maxLevel">0</span></div>
+    <div>割り振り可能ポイント（残り）: <span id="remPoints" style="color: cyan; font-weight: bold;">0</span></div>
+
+   <div class="control">
+    <label>攻撃力: <span id="baseAtk">0</span> + 
+      <input type="number" id="plusAtk" oninput="updatePoints()" min="0">
+   </label>
+</div>
+
+<div class="control">
+    <label>防御力: <span id="baseDef">0</span> + 
+        <input type="number" id="plusDef" oninput="updatePoints()" min="0">
+    </label>
+</div>
+
+<div class="control">
+    <label>速さ: <span id="baseSpd">0</span> + 
+        <input type="number" id="plusSpd" oninput="updatePoints()" min="0">
+    </label>
+</div>
+
+    <!-- 武器（制限をなくし、いつでも自由に変更可能にしました） -->
+    <div class="control">
+        <label>武器: </label>
+        <select id="weapon" onchange="updatePoints()">
+            <option value="none">なし</option>
+            <option value="machinegun">マシンガン</option>
+            <option value="beamgun">ビームガン</option>
+            <option value="missile">ミサイル</option>
+        </select>
+    </div>
+
+    <!-- カラー -->
+    <div class="control">
+        <label>カラー: </label>
+        <input type="color" id="color" oninput="updatePoints()">
+    </div>
+
+    <button id="saveBtn" onclick="saveData()">改造を確定</button>
+    <button onclick="history.back()">戻る</button>
+
+<script>
+    const params = new URLSearchParams(window.location.search);
+    const slotId = params.get('id');
+    const robot = JSON.parse(localStorage.getItem(`robot_slot_${slotId}`));
+
+    if (robot) {
+        if (robot.baseAtk === undefined) {
+            robot.baseAtk = robot.atk || 10;
+            robot.baseDef = robot.def || 10;
+            robot.baseSpd = robot.spd || 10;
+        }
+
+        document.getElementById('robotName').innerText = robot.name || "不明";
+        document.getElementById('maxLevel').innerText = robot.level || 1;
+        
+        document.getElementById('baseAtk').innerText = robot.baseAtk;
+        document.getElementById('plusAtk').value = robot.plusAtk || 0;
+        
+        document.getElementById('baseDef').innerText = robot.baseDef;
+        document.getElementById('plusDef').value = robot.plusDef || 0;
+        
+        document.getElementById('baseSpd').innerText = robot.baseSpd;
+        document.getElementById('plusSpd').value = robot.plusSpd || 0;
+        
+        document.getElementById('weapon').value = robot.weapon || "none";
+        document.getElementById('color').value = robot.color || "#ffffff";
+
+        updatePoints();
+    } else {
+        alert("機体データが見つかりません。");
+        location.href = 'hangar.html';
+    }
+
+    function updatePoints() {
+        if (!robot) return;
+
+        const availablePoints = parseInt(robot.level) || 1;
+
+        let pAtkInput = document.getElementById('plusAtk');
+        let pDefInput = document.getElementById('plusDef');
+        let pSpdInput = document.getElementById('plusSpd');
+
+        let pAtk = parseInt(pAtkInput.value) || 0;
+        let pDef = parseInt(pDefInput.value) || 0;
+        let pSpd = parseInt(pSpdInput.value) || 0;
+
+        // マイナス入力をガード
+        if (pAtk < 0) { pAtk = 0; pAtkInput.value = 0; }
+        if (pDef < 0) { pDef = 0; pDefInput.value = 0; }
+        if (pSpd < 0) { pSpd = 0; pSpdInput.value = 0; }
+
+        let totalCost = pAtk + pDef + pSpd;
+
+        // 合計ポイントが最大レベルを超えた場合、超過分を自動で差し引いてマイナスになるのを防ぐ
+        if (totalCost > availablePoints) {
+            let excess = totalCost - availablePoints;
+            
+            if (pSpd >= excess) {
+                pSpd -= excess;
+                pSpdInput.value = pSpd;
+            } else if (pDef >= excess) {
+                pDef -= excess;
+                pDefInput.value = pDef;
+            } else if (pAtk >= excess) {
+                pAtk -= excess;
+                pAtkInput.value = pAtk;
+            }
+            totalCost = pAtk + pDef + pSpd;
+        }
+        
+        const rem = availablePoints - totalCost;
+        
+        const remDisplay = document.getElementById('remPoints');
+        remDisplay.innerText = rem;
+        remDisplay.className = '';
+
+        // 特殊なエラーチェックを撤廃したため、いつでも保存ボタンは押せる状態にします
+        document.getElementById('saveBtn').disabled = false;
+    }
+
+    function saveData() {
+        if (!robot) return;
+
+        const pAtk = parseInt(document.getElementById('plusAtk').value) || 0;
+        const pDef = parseInt(document.getElementById('plusDef').value) || 0;
+        const pSpd = parseInt(document.getElementById('plusSpd').value) || 0;
+
+        robot.atk = robot.baseAtk + pAtk;
+        robot.def = robot.baseDef + pDef;
+        robot.spd = robot.baseSpd + pSpd;
+
+        robot.plusAtk = pAtk;
+        robot.plusDef = pDef;
+        robot.plusSpd = pSpd;
+        robot.weapon = document.getElementById('weapon').value;
+        robot.color = document.getElementById('color').value;
+
+        RobotManager.saveRobot(slotId, robot);
+
+        alert("改造完了！機体の電脳が強化されました。");
+        location.href = `my_robot_manage.html?id=${slotId}`;
+    }
+</script>
+</body>
+</html>

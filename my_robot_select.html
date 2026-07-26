@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>格納庫 - メロディーギア</title>
+    <style>
+body {
+    background-color: #2c3e50;
+    color: #ecf0f1;
+}
+
+.hangar-grid {
+    display: grid;
+    /* 1. 横幅を稼ぐため、1列（横長）を基本にします */
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); 
+    gap: 15px;
+    padding: 10px;
+}
+
+/* 2. 箱を横長にし、高さを固定しない（文字が増えると伸びる） */
+.slot-item {
+    border: 2px solid #ecf0f1;
+    padding: 20px;
+    background: #34495e; /* 暗い背景 */
+    border-radius: 12px;
+    
+    /* 横長のデザインにするための設定 */
+    display: flex;
+    flex-direction: row; /* 3. 横並びにする */
+    justify-content: space-between; /* 両端に配置 */
+    align-items: center; /* 縦方向の中央 */
+    min-height: 80px; /* 最低限の高さ */
+}
+
+/* 機体名と曲名の部分 */
+.slot-name-area {
+    flex-grow: 1; /* 4. 残った幅を全部使う */
+    margin-right: 20px; /* ボタンとの距離 */
+}
+
+/* 5. どんなに長い名前でも、絶対に枠外に出さない（自動改行） */
+.robot-name, .bgm-title {
+    color: #ecf0f1; /* 白い文字 */
+    margin: 0;
+    
+    /* 自動改行のための設定 */
+    word-wrap: break-word; 
+    overflow-wrap: break-word;
+}
+
+.robot-name {
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+.bgm-title {
+    font-size: 0.9rem;
+    color: #bdc3c7; /* 曲名は少し暗めの白に */
+    margin-top: 5px;
+}
+
+/* 管理ボタン */
+.slot-item button {
+    background: #e67e22; /* 目立つ色に */
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: bold;
+    min-width: 100px;
+    
+    /* 6. ボタン自体も自動的に折りたたまれないように設定 */
+    flex-shrink: 0; 
+}
+
+.button-area { display: flex; gap: 10px; }
+
+/* BGMタイトルを控えめに表示する */
+.bgm-title {
+    font-size: 0.75rem !important; /* 文字を小さく */
+    color: #7f8c8d !important;      /* 薄いグレーにして目立たなく */
+    margin-top: 2px !important;
+    font-style: italic;             /* 斜体にして注釈っぽく */
+}
+
+  </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>格納庫 (50スロット)</h1>
+
+    <div class="backup-area">
+        <h3>全データバックアップ</h3>
+        <button onclick="exportAllData()">全機体データをコピー</button>
+        <button onclick="importAllData()">全機体データを復元</button>
+        <button onclick="location.href='base.html'">基地へ戻る</button>
+    </div>
+
+    <div id="hangar" class="hangar-grid"></div>
+
+<script>
+    const hangar = document.getElementById('hangar');
+    const MAX_SLOTS = 50;
+
+    // 画面ロード時に表示
+    renderHangar();
+
+    function renderHangar() {
+        hangar.innerHTML = ''; // 一度クリア
+        const activeRobotId = localStorage.getItem('activeRobotId');
+
+        for (let i = 0; i < MAX_SLOTS; i++) {
+            const key = `robot_slot_${i}`;
+            const data = localStorage.getItem(key);
+            const robot = data ? JSON.parse(data) : null;
+            
+            const name = robot ? robot.name : "空きスロット";
+            const level = robot ? (robot.level || 1) : "-";
+            const isSelected = (activeRobotId == i);
+
+            const div = document.createElement('div');
+
+            const slotNum = String(i).padStart(2, '0'); 
+
+            // デザイン用のクラスを設定
+div.innerHTML = `
+    <div class="slot-item">
+        <div class="slot-name-area">
+            <div class="robot-name">
+                [No.${slotNum}] ${name} 
+                <span style="font-size: 0.8em; color: #f1c40f;">(LV: ${level})</span>
+            </div>
+            <div class="bgm-title"></div>
+            ${isSelected ? '<div style="color:orange; font-weight:bold;">===★搭乗中★===</div>' : ''}
+        </div>
+        
+        <div class="button-area" style="display: flex; gap: 10px;">
+            <button onclick="location.href='my_robot_manage.html?id=${i}'">管理</button>
+            ${robot ? `<button onclick="equipRobot('${i}')" style="background: orange; color: white;">搭乗する</button>` : ''}
+        </div>
+    </div>
+`;
+            hangar.appendChild(div);
+        }
+    }
+
+    function equipRobot(robotId) {
+        localStorage.setItem('activeRobotId', robotId);
+        alert("機体に搭乗しました！");
+        location.reload(); 
+    }
+
+    // --- バックアップ関連 ---
+    function exportAllData() {
+        let allData = {};
+        for (let i = 0; i < MAX_SLOTS; i++) {
+            const data = localStorage.getItem(`robot_slot_${i}`);
+            if (data) allData[`robot_slot_${i}`] = JSON.parse(data);
+        }
+        const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(allData))));
+        navigator.clipboard.writeText(encoded);
+        alert("全データをコピーしました。");
+    }
+
+    function importAllData() {
+        const code = prompt("バックアップコードを貼り付けてください");
+        if (!code) return;
+        try {
+            const decoded = JSON.parse(decodeURIComponent(escape(atob(code))));
+            for (let key in decoded) {
+                localStorage.setItem(key, JSON.stringify(decoded[key]));
+            }
+            alert("復元完了！");
+            location.reload();
+        } catch(e) { alert("無効なデータです。"); }
+    }
+</script>
+
+</body>
+</html>

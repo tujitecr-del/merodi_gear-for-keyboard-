@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>アバター設定</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+    <style>
+        body { background: #050510; color: #00fff0; font-family: 'Courier New', monospace; padding: 20px; }
+        .container { max-width: 400px; margin: 0 auto; border: 2px solid #00fff0; padding: 20px; background: rgba(0, 0, 0, 0.5); }
+        #imagePreview { max-width: 100%; display: block; }
+        .current-avatar { width: 64px; height: 64px; border: 2px solid #00fff0; margin: 10px auto; display: block; }
+        .info-box { background: rgba(0, 0, 0, 0.6); border: 1px dashed #00fff0; padding: 15px; margin-bottom: 20px; }
+        .btn { background: #005555; color: white; border: none; padding: 10px; cursor: pointer; margin-top: 10px; width: 100%; }
+        .btn-back { background: #222; color: #00fff0; border: 1px solid #00fff0; padding: 10px; width: 100%; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div style="text-align: center;">
+            <p>現在のアバター</p>
+            <img id="currentAvatar" class="current-avatar" src="">
+        </div>
+
+        <div class="info-box">
+            <span id="displayPilotName" style="font-size:1.2rem; font-weight:bold;">No name</span><br>
+            <button class="btn" onclick="changeName()">名前を変更</button>
+        </div>
+
+      <label for="cameraInput" class="btn" style="display:inline-block; text-align:center; cursor:pointer;">
+      📷 カメラで撮影
+     </label>
+     <input type="file" id="cameraInput" accept="image/*" capture="user" style="display:none;">
+
+     <label for="fileInput" class="btn" style="display:inline-block; text-align:center; cursor:pointer;">
+    📁 ファイルから選択
+     </label>
+     
+      <input type="file" id="fileInput" accept="image/*" style="display:none;">
+
+        <div style="margin: 20px 0;">
+            <img id="imagePreview" src="">
+        </div>
+        <button id="saveBtn" class="btn" style="display:none;">この範囲でアイコンを確定</button>
+
+        <button class="btn-back" onclick="window.location.href='base.html'">基地へ戻る</button>
+    </div>
+
+    <script>
+        let cropper;
+        const image = document.getElementById('imagePreview');
+        const saveBtn = document.getElementById('saveBtn');
+
+        window.onload = () => {
+            document.getElementById('displayPilotName').innerText = localStorage.getItem('pilotName') || "No name";
+            // 現在の画像をロード
+            const savedAvatar = localStorage.getItem('avatarImage');
+            if(savedAvatar) document.getElementById('currentAvatar').src = savedAvatar;
+        };
+
+        // 共通の画像セット処理
+        const handleFile = (e) => {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                image.src = event.target.result;
+                if (cropper) cropper.destroy();
+                cropper = new Cropper(image, { aspectRatio: 1, viewMode: 1 });
+                saveBtn.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        };
+
+        document.getElementById('fileInput').onchange = handleFile;
+        document.getElementById('cameraInput').onchange = handleFile;
+
+        saveBtn.onclick = () => {
+            const canvas = cropper.getCroppedCanvas({ width: 64, height: 64 });
+            const dataUrl = canvas.toDataURL('image/png');
+            
+            localStorage.setItem('avatarImage', dataUrl);
+            document.getElementById('currentAvatar').src = dataUrl; // 即時反映
+            alert("アバターを更新しました！");
+        };
+
+function changeName() {
+    const currentName = document.getElementById('displayPilotName').innerText;
+    const newName = prompt("パイロット名を入力してください（※12文字以内）:", currentName === "No name" ? "" : currentName);
+    
+    // キャンセルされた場合や空文字の場合は何もしない
+    if (newName === null) return;
+    
+    const trimmedName = newName.trim();
+    if (trimmedName === "") {
+        alert("名前が入力されていません。");
+        return;
+    }
+    
+    // 文字数制限のチェック（例: 12文字）
+    const maxLength = 12;
+    if (trimmedName.length > maxLength) {
+        alert(`名前は${maxLength}文字以内で入力してください。`);
+        return;
+    }
+    
+    document.getElementById('displayPilotName').innerText = trimmedName;
+    localStorage.setItem('pilotName', trimmedName);
+    alert("パイロット名を更新しました！");
+}
+    </script>
+</body>
+</html>

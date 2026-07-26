@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>音楽作成室</title>
+    <style>
+        body { background: #1a1a2e; color: #4ecca3; font-family: sans-serif; padding: 20px; font-size: 1.1rem; }
+        input, textarea, select { width: 100%; background: #000; color: #4ecca3; border: 1px solid #4ecca3; padding: 10px; margin-top: 5px; box-sizing: border-box; }
+        .keyboard { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 20px 0; }
+        .key { height: 70px; background: #fff; border: none; font-weight: bold; cursor: pointer; color: #000; }
+        .main-btn { background: #4ecca3; padding: 15px; width: 48%; color: #000; font-weight: bold; cursor: pointer; margin-top: 5px; }
+        .sub-btn { background: #333; color: #4ecca3; border: 1px solid #4ecca3; padding: 10px; width: 48%; margin-top: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>音楽作成室</h1>
+    テンポ（秒）:<input type="number" id="tempo" value="0.2" step="0.05">
+    <div>
+        音の種類: 
+        <select id="waveType" onchange="addWaveCommand()">
+            <option value="square">ロボットの音</option>
+            <option value="sine">やさしい音</option>
+            <option value="sawtooth">金属の音</option>
+            <option value="triangle">ふしぎな音</option>
+        </select>
+    </div>
+
+    <div class="keyboard" id="keyboard"></div>
+
+    <div style="display:flex; gap: 5px;">
+        <button class="sub-btn" onclick="changeOctave(-12)">低い音</button>
+        <button class="sub-btn" onclick="changeOctave(12)">高い音</button>
+        <button class="sub-btn" onclick="addRest()">休符(0)</button>
+        <button class="sub-btn" onclick="addHold()">伸ばす(-)</button>
+    </div>
+
+    <h3>譜面データ</h3>
+    <textarea id="sequenceText" rows="5" placeholder="[square],60,62,64..."></textarea>
+    
+    <div>
+        <button class="main-btn" onclick="startAndPlay()">再生</button>
+        <button class="main-btn" style="background:#ff6b6b" onclick="stopMusic()">停止</button>
+        <button class="main-btn" style="background:#f1c40f" onclick="document.getElementById('fileInput').click()">読み込み</button>
+        <button class="main-btn" style="background:#3498db; color:#fff" onclick="saveFile()">保存</button>
+        <input type="file" id="fileInput" style="display:none" accept=".melogefile">
+    </div>
+
+    <hr>
+    曲名:<input type="text" id="title" value="新曲">
+    作曲者:<input type="text" id="author" value="匿名">
+    コメント:<input type="text" id="comment" value="なし">
+    <button onclick="location.href='base.html'">戻る</button>
+    <button class="main-btn" style="background:#27ae60; color:#fff" onclick="saveMyCollection()">マイコレクションをダウンロード</button>
+
+<script>
+    // 1. Playback オブジェクトの定義
+    const Playback = {
+        audioCtx: null,
+        masterGain: null,
+        playTimeout: null,
+        isPlaying: false,
+        currentTempo: 0.2,
+        
+        init() {
+            if (!this.audioCtx) {
+                this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                this.masterGain = this.audioCtx.createGain();
+                this.masterGain.connect(this.audioCtx.destination);
+                this.masterGain.gain.value = 0.19;
+            }
+            if (this.audioCtx.state === 'suspended') this.audioCtx.resume();
+        },
+        
+        stop() {
+            this.isPlaying = false;
+            clearTimeout(this.playTimeout);
+            this.playTimeout = null;
+        },
+
+        async play(jsonData, tempoSeconds = 0.2) {
+            this.init();
+            this.stop();
+            this.currentTempo = tempoSeconds * 1000;
+            this.isPlaying = true;
+            let seq = Array.isArray(jsonData.sequence) ? jsonData.sequence : (typeof jsonData.sequence === 'string' ? jsonData.sequence.split(',') : []);
+            let i = 0;
+            let currentWave = 'square';
+
+            const step = () => {
+                if (!this.isPlaying) return;
+                if (i >= seq.length) i = 0;
+                let val = seq[i];
+                let waitTime = this.currentTempo;
+                if (typeof val === 'string' && val.startsWith('[')) {
+                    currentWave = val.replace(/[\[\]]/g, '');
+                } else if (val !== '0' && val !== 0 && val !== "" && val !== '-') {
+                    let note = Number(val);
+                    if (!isNaN(note)) {
+                        let durationCount = 1;
+                        while (i + 1 < seq.length && seq[i + 1] === '-') { durationCount++; i++; }
+                        waitTime = durationCount * this.currentTempo;
+                        this.playNote(note, currentWave, waitTime - 20);
+                    }
+                }
+                i++;
+                this.playTimeout = setTimeout(step, waitTime);
+            };
+            step();
+        },
+
+        playNote(n, wave, duration) {
+            if (isNaN(n) || !this.audioCtx) return;
+            const osc = this.audioCtx.createOscillator();
+            osc.type = wave;
+            osc.frequency.setValueAtTime(440 * Math.pow(2, (n - 69) / 12), this.audioCtx.currentTime);
+            osc.connect(this.masterGain);
+            osc.start();
+            setTimeout(() => { try { osc.stop(); osc.disconnect(); } catch(e) {} }, duration);
+        }
+    };
+
+    function stopMusic() {
+        Playback.stop();
+    }
+
+    async function startAndPlay() {
+        const seqStr = document.getElementById('sequenceText').value;
+        const seqArray = seqStr.split(',').filter(item => item !== "");
+        const data = { sequence: seqArray };
+        const tempo = parseFloat(document.getElementById('tempo').value);
+        
+        await Playback.play(data, tempo);
+    }
+
+    // 鍵盤の設定
+    const notes = [60, 62, 64, 65, 67, 69, 71, 72];
+    const labels = ['ド↓', 'レ', 'ミ', 'ファ', 'ソ', 'ラ', 'シ', 'ド↑'];
+    let octave = 0;
+
+    function renderKeyboard() {
+        const container = document.getElementById('keyboard');
+        if (!container) return;
+        container.innerHTML = '';
+        notes.forEach((n, i) => {
+            const btn = document.createElement('button');
+            btn.className = 'key';
+            btn.id = 'k' + i;
+            btn.innerHTML = (n + octave) + '<br>' + labels[i];
+            btn.onclick = () => {
+                Playback.init();
+                const seq = document.getElementById('sequenceText');
+                const noteVal = n + octave;
+                seq.value += (seq.value ? ',' : '') + noteVal;
+                Playback.playNote(noteVal, document.getElementById('waveType').value, 150);
+            };
+            container.appendChild(btn);
+        });
+    }
+
+    function addWaveCommand() {
+        const wave = document.getElementById('waveType').value;
+        document.getElementById('sequenceText').value += (document.getElementById('sequenceText').value ? ',' : '') + '[' + wave + ']';
+    }
+
+    function changeOctave(val) {
+        octave += val;
+        renderKeyboard();
+    }
+
+    function addRest() { document.getElementById('sequenceText').value += ',0'; }
+    function addHold() { document.getElementById('sequenceText').value += ',-'; }
+
+    // --- 保存処理 ---
+    function saveFile() {
+        const data = {
+            title: document.getElementById('title').value,
+            author: document.getElementById('author').value,
+            comment: document.getElementById('comment').value,
+            tempo: document.getElementById('tempo').value,
+            sequence: document.getElementById('sequenceText').value
+        };
+        
+        const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = (data.title || "untitled") + ".melogefile";
+        a.click();
+    }
+
+    // --- 読み込み処理 ---
+    document.addEventListener('DOMContentLoaded', () => {
+        // ページ読み込み完了時に鍵盤を必ず生成する
+        renderKeyboard();
+
+        document.getElementById('fileInput').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    
+                    // コレクションファイルだった場合の処理
+                    if (data.type === "MelogeBGMCollection") {
+                        let currentSongs = JSON.parse(localStorage.getItem('stored_songs_data')) || {};
+                        let currentIds = JSON.parse(localStorage.getItem('unlocked_bgm_ids')) || [];
+                        
+                        Object.assign(currentSongs, data.songs);
+                        data.unlockedIds.forEach(id => {
+                            if (!currentIds.includes(id)) currentIds.push(id);
+                        });
+                        
+                        localStorage.setItem('stored_songs_data', JSON.stringify(currentSongs));
+                        localStorage.setItem('unlocked_bgm_ids', JSON.stringify(currentIds));
+                        
+                        alert(`マイコレクションを読み込みました！ (計 ${currentIds.length} 曲)`);
+                        return;
+                    }
+
+                    // 通常の単曲ファイルだった場合の処理
+                    document.getElementById('title').value = data.title || "";
+                    document.getElementById('author').value = data.author || "";
+                    document.getElementById('comment').value = data.comment || "";
+                    document.getElementById('tempo').value = data.tempo || "0.2";
+                    document.getElementById('sequenceText').value = data.sequence || "";
+
+                } catch (err) {
+                    alert("ファイルの読み込みに失敗しました。");
+                }
+            };
+            reader.readAsText(file);
+        });
+    });
+
+    // --- マイコレクションの一括ダウンロード処理 ---
+    function saveMyCollection() {
+        const storedSongs = JSON.parse(localStorage.getItem('stored_songs_data')) || {};
+        const unlockedIds = JSON.parse(localStorage.getItem('unlocked_bgm_ids')) || [];
+
+        if (unlockedIds.length === 0 && Object.keys(storedSongs).length === 0) {
+            alert("まだ入手しているマイコレクションのBGMがありません。バトルで勝利して曲を集めよう！");
+            return;
+        }
+
+        const collectionData = {
+            type: "MelogeBGMCollection",
+            unlockedIds: unlockedIds,
+            songs: storedSongs,
+            exportDate: new Date().toISOString()
+        };
+
+        const blob = new Blob([JSON.stringify(collectionData, null, 2)], { type: "application/json" });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = "my_bgm_collection.melogefile";
+        a.click();
+    }
+</script>
+</body>
+</html>

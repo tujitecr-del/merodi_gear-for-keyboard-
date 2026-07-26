@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>メロディーギア</title>
+    <style>
+        body { 
+            background: #000; 
+            color: #fff; 
+            text-align: center; 
+            font-family: sans-serif;
+            margin: 0;
+            padding-top: 15vh;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        button { 
+            padding: 15px 30px; 
+            font-size: 20px; 
+            background: #444; 
+            color: white; 
+            border: 2px solid white;
+            cursor: pointer;
+            margin: 10px;
+        }
+        button:hover { background: #666; }
+
+        /* ポップアップ（モーダル）のスタイル */
+        #manualModal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.8);
+        }
+        .modal-content {
+            background-color: #1a1a2e;
+            color: #fff;
+            margin: 5% auto;
+            padding: 20px 30px;
+            border: 2px solid #4ecca3;
+            width: 80%;
+            max-width: 600px;
+            max-height: 75vh;
+            overflow-y: auto;
+            text-align: left;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        }
+        .modal-content h2, .modal-content h3 {
+            color: #4ecca3;
+        }
+        .modal-content hr {
+            border: 0;
+            border-top: 1px dashed #4ecca3;
+            margin: 15px 0;
+        }
+        .close-btn {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            display: block;
+            margin: 20px auto 0;
+            border-radius: 4px;
+        }
+        .close-btn:hover {
+            background: #ff5252;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>＜メロディーギア＞<br>merodi_gear</h1>
+        <p>世界へようこそ。</p>
+        <div>
+            <button onclick="location.href='base.html'">スタート</button>
+            <br>
+            <button onclick="openManual()" style="font-size: 16px; padding: 10px 20px; background: #222; border-color: #4ecca3; color: #4ecca3;">説明書を読む</button>
+        </div>
+    </div>
+
+    <!-- 説明書ポップアップ -->
+    <div id="manualModal">
+        <div class="modal-content">
+            <h2>🎵 merodi_gear（メロディーギア）</h2>
+            <p>MP3や自作曲からロボットを生成して戦う、2D横格闘ゲームです。<br>
+            ENを回復しつつ、ENを消費してジャンプや攻撃を行ってください。<br>
+            リアルタイム対人戦闘ではなく、放置対戦用に放置されている電脳搭載機体を掲示板から選び戦うシステムです。</p>
+            
+            <hr>
+
+            <h3>🎮 操作方法</h3>
+            <p>・スマホ：タッチパネル / PCマウス (trackpad)<br>
+            ・ゲームパッド対応版 (for gamepad)<br>
+            ・PCキーボード対応版 (for keyboard)</p>
+
+            <p><strong>戦闘時のキーボード操作：</strong><br>
+            * 移動：<b><span>← A</span>・<span>→ S</span>・<span>↑ W</span>・<span>↓ Z</span></b><br>
+            * アクション：<b><span>EN i</span></b> / <b><span>バリア o</span></b> / <b><span>近接 k</span></b> / <b><span>遠距離 l</span></b></p>
+
+            <hr>
+
+            <h3>🗺️ メニュー・機能の流れ</h3>
+            <ol>
+                <li><b>「index（トップ画面）」</b></li>
+                <li><b>「あなたの基地」</b>
+                    <ul>
+                        <li>アバター編集</li>
+                        <li>機体生成・改造・搭乗
+                            <ul>
+                                <li>格納庫（自機50体まで保管）
+                                    <ul>
+                                        <li>管理：「音楽から機体生成」「機体改造」</li>
+                                        <li>放置機体と戦闘（勝利でLv+4、敗北でLv+2）</li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+                <li><b>「BGM作曲」</b>（.merogefile 拡張子）<br>作曲・試聴機能。ロボット格納庫で選べば放置戦闘時の相手のBGMになります。</li>
+                <li><b>「誰かの放置機体と対戦」</b><br>自機を操作してCPUと戦うモード（1試合5分）。</li>
+            </ol>
+
+            <hr>
+
+            <h3>⚔️ バトル基本ルール</h3>
+            <ul>
+                <li>手動操作：ENチャージ / バリア / 遠距離 / 近距離</li>
+                <li><strong>各ステータス上限：</strong>電脳レベル 100 / 攻撃力 999 / 防御力 999 / 速さ 999</li>
+            </ul>
+
+            <hr>
+
+            <h3>💾 機体データの引き継ぎ</h3>
+            <p>サーバーを使わず、ご自身でデータを保管するスタイルです。<br>
+            * <b>保管：</b>「機体データをコピー」で文字列を保存。<br>
+            * <b>復元：</b>新しい端末の入力欄に貼り付けて「機体データを復元」。</p>
+
+            <hr>
+
+            <h3>🎶 .merogefile について</h3>
+            <p>このゲーム専用のJSON形式BGMファイル拡張子です。<br>
+            自作できるほか、戦闘後に勝った相手のBGMを入手して機体生成や自機のBGMに流用可能です。</p>
+
+            <hr>
+
+            <h3>⚠️ 免責事項・注意事項</h3>
+            <p><b>【免責事項】</b>第三者の著作権を侵害する楽曲の制作・公開はお控えください。トラブル等について開発者は一切の責任を負いません。<br>
+            <b>【注意】</b>不適切なデータなどは事前告知なく削除される場合があります。</p>
+
+            <button class="close-btn" onclick="closeManual()">閉じる</button>
+        </div>
+    </div>
+
+<script>
+    function openManual() {
+        document.getElementById('manualModal').style.display = 'block';
+    }
+    function closeManual() {
+        document.getElementById('manualModal').style.display = 'none';
+    }
+    window.onclick = function(event) {
+        const modal = document.getElementById('manualModal');
+        if (event.target == modal) {
+            modal.style.display = 'none';
+        }
+    }
+</script>
+
+<!-- Firebase SDK の読み込み -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+<script>
+    // Firebase初期化設定（必要に応じて他のページでも読み込めるように共通化も可能です）
+    const firebaseConfig = {
+        apiKey: "AIzaSyCJ5h0o9RdNf19wJYXQRzd7rfJDazeRmwc",
+        authDomain: "merodigear.firebaseapp.com",
+        projectId: "merodigear",
+        storageBucket: "merodigear.firebasestorage.app",
+        messagingSenderId: "863493263922",
+        appId: "1:863493263922:web:637be57f738317b2a0622b",
+        measurementId: "G-34K1QLXL4S"
+    };
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+    const database = firebase.database();
+</script>
+
+<!-- ゲーム用スクリプト群 -->
+<script src="state.js"></script>
+<script src="playback.js"></script>
+<script src="render.js"></script>
+<script src="battle_engine.js"></script>
+<script src="audio_manager.js"></script>
+<script src="data_loader.js"></script>
+<script src="battle_input.js"></script>
+</body>
+</html>

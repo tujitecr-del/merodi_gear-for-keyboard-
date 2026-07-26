@@ -1,0 +1,5 @@
+// 対戦終了時の処理例
+function finishBattle(win, opponentBgmName) {
+    // 勝利フラグとBGM名をURLパラメータとして渡す
+    location.href = `result.html?win=${win}&bgm=${encodeURIComponent(opponentBgmName)}`;
+}

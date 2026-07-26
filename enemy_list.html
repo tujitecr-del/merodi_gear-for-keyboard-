@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>放置対戦募集掲示板</title>
+    <style>
+        body { background: #1a1a2e; color: #4ecca3; font-family: sans-serif; padding: 20px; }
+        .controls { margin-bottom: 20px; display: flex; gap: 10px; }
+        #board-list { height: 400px; overflow-y: auto; border: 2px solid #4ecca3; padding: 10px; border-radius: 8px; }
+        .board-card {
+            border: 1px solid #4ecca3;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            background: #16213e;
+        }
+        .card-header { font-size: 1.2rem; font-weight: bold; margin-bottom: 5px; }
+        .card-body { margin-bottom: 10px; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+    <h2>対戦相手募集掲示板</h2>
+
+    <div class="header-actions" style="margin-bottom: 10px;">
+        <button onclick="location.href='index.html'">◀ 基地へ戻る</button>
+    </div>
+
+    <div class="controls" style="margin-bottom: 20px;">
+        <input type="text" id="searchInput" placeholder="機体名で検索" oninput="renderBoard()">
+        <button onclick="sortBoard('newest')">最新順</button>
+        <button onclick="sortBoard('level')">Lv高い順</button>
+    </div>
+
+    <div id="board-list">
+        <p>データを読み込み中...</p>
+    </div>
+
+    <!-- Firebase SDK の読み込み -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+    <script>
+        // Firebase初期化
+        const firebaseConfig = {
+            apiKey: "AIzaSyCJ5h0o9RdNf19wJYXQRzd7rfJDazeRmwc",
+            authDomain: "merodigear.firebaseapp.com",
+            projectId: "merodigear",
+            storageBucket: "merodigear.firebasestorage.app",
+            messagingSenderId: "863493263922",
+            appId: "1:863493263922:web:637be57f738317b2a0622b",
+            measurementId: "G-34K1QLXL4S"
+        };
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const database = firebase.database();
+
+        function calculateOverallRating(atk, armor, speed, level) {
+            const a = parseFloat(atk) || 0;
+            const ar = parseFloat(armor) || 0;
+            const s = parseFloat(speed) || 0;
+            const l = parseFloat(level) || 0;
+            const rating = (a + ar + s + l) * 0.1;
+            return rating.toFixed(1);
+        }
+
+        // 著作権NG楽曲リスト
+        const BANNED_SONGS = ["著作権的にまずい曲名A", "著作権的にまずい曲名B"];
+        const MAX_DISPLAY_COUNT = 300; 
+
+        let currentSortMode = 'newest';
+        let cachedPosts = []; // Firebaseから取得したデータを保持するキャッシュ
+
+        // Firebaseからデータを取得して描画する
+        async function fetchAndRenderBoard() {
+            const list = document.getElementById('board-list');
+            list.innerHTML = "<p>読み込み中...</p>";
+
+            try {
+                // Firebaseの 'board_posts' からデータを取得
+                const snapshot = await database.ref('board_posts').once('value');
+                const data = snapshot.val();
+                
+                if (data) {
+                    // Firebaseのオブジェクト構造を配列に変換（キーをidとして持たせる）
+                    cachedPosts = Object.keys(data).map(key => ({
+                        id: key,
+                        ...data[key]
+                    }));
+                } else {
+                    cachedPosts = [];
+                }
+                renderBoard();
+            } catch (error) {
+                console.error("データ取得エラー:", error);
+                list.innerHTML = "<p>データの読み込みに失敗しました。</p>";
+            }
+        }
+
+        function renderBoard() {
+            const list = document.getElementById('board-list');
+            const searchKeyword = document.getElementById('searchInput').value.toLowerCase();
+            let allPosts = [...cachedPosts];
+
+            // --- 1. ソート処理 ---
+            if (currentSortMode === 'newest') {
+                allPosts.sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
+            } else if (currentSortMode === 'level') {
+                allPosts.sort((a, b) => (b.robot?.level || 1) - (a.robot?.level || 1));
+            }
+
+            // --- 2. 検索 & 目隠しフィルターの適用 ---
+            const displayList = allPosts
+                .filter(post => {
+                    if (!post.robot) return false;
+                    const title = post.robot.bgmTitle;
+                    if (title && BANNED_SONGS.includes(title)) return false;
+
+                    if (searchKeyword && !post.robot.name.toLowerCase().includes(searchKeyword)) {
+                        return false;
+                    }
+                    return true;
+                })
+                .slice(0, MAX_DISPLAY_COUNT);
+
+            if (displayList.length === 0) {
+                list.innerHTML = "<p>該当する対戦相手がいません。</p>";
+                return;
+            }
+
+            list.innerHTML = '';
+            
+            displayList.forEach((e) => {
+                const card = document.createElement('div');
+                card.className = 'board-card';
+                card.innerHTML = `
+                    <div class="card-header">
+                        電脳Lv.${e.robot.level || 1} | 総合評価: ${calculateOverallRating(e.robot.atk, e.robot.def, e.robot.spd, e.robot.level)} | ${e.robot.name}
+                    </div>
+                    <div class="card-body">
+                        <p>パイロット: ${e.avatar?.name || "名無し"}</p>
+                    </div>
+                    <div>
+                        <button class="detail-btn">詳細を見る</button>
+                        <button class="battle-btn" style="background: #e94560; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 4px;">バトる</button>
+                    </div>
+                `;
+
+                card.querySelector('.detail-btn').onclick = () => {
+                    location.href = `enemy_detail.html?id=${e.id}`;
+                };
+
+                card.querySelector('.battle-btn').onclick = () => {
+                    startBattle(e.robot, e.avatar);
+                };
+
+                list.appendChild(card);
+            });
+        }
+
+        function sortBoard(mode) {
+            currentSortMode = mode;
+            renderBoard();
+        }
+
+        function startBattle(enemyRobotData, enemyAvatarData) {
+            if (!enemyRobotData.bgmData) {
+                enemyRobotData.bgmData = {
+                    title: "デフォルト曲",
+                    composer: "tujitecr",
+                    comment: "デフォルト曲",
+                    sequence: "60,62,60,62,60,62,60,62,64,64,64,0,60,62,60,62,60,62,60,62,64,64,64,0,67,69,67,69,67,69,67,69,71,71,71,0,67,69,67,69,67,69,67,69,71,71,71,0,0,62,64,65,65,64,62,0,62,64,65,65,64,62,0,67,69,69,69,-,67,69,69,69,-,0,60,60,600", 
+                    tempo: 0.2
+                };
+            }
+            
+            const myRobotId = localStorage.getItem('activeRobotId');
+            const myRobotData = JSON.parse(localStorage.getItem(`robot_slot_${myRobotId}`));
+
+            if (!myRobotData) {
+                alert("搭乗中の機体が見つかりません！格納庫で搭乗してください。");
+                return;
+            }
+
+            const battleData = {
+                player: {
+                    avatar: { name: localStorage.getItem('pilotName') || "パイロット", icon: localStorage.getItem('avatarImage') },
+                    robot: myRobotData 
+                },
+                enemy: {
+                    avatar: enemyAvatarData || { name: "CPUパイロット" },
+                    robot: enemyRobotData
+                }
+            };
+
+            localStorage.setItem('battleData', JSON.stringify(battleData));
+            location.href = 'battle.html';
+        }
+
+        // 初回ロード時にFirebaseからデータ取得を実行
+        fetchAndRenderBoard();
+    </script>
+</body>
+</html>

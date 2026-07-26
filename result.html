@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>対戦結果 - メロディーギア</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .result-panel { background: #222; padding: 30px; border-radius: 15px; text-align: center; }
+        .win { color: #00ff00; font-size: 2rem; }
+        .lose { color: #ff3333; font-size: 2rem; }
+        .reward-box { margin: 20px 0; padding: 15px; border: 1px dashed cyan; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="result-panel">
+            <h1 id="resultTitle">--</h1>
+            <div id="rewardSection" class="reward-box"></div>
+            <p id="expMessage"></p>
+        </div>
+        <button onclick="location.href='hangar.html'">格納庫へ戻る</button>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const isWin = urlParams.get('win') === 'true'; // URLから勝敗を取得
+        const bgmName = urlParams.get('bgm') || "なし";
+        
+        // 結果表示の更新
+        document.getElementById('resultTitle').innerText = isWin ? "勝利！" : "敗北...";
+        document.getElementById('resultTitle').className = isWin ? "win" : "lose";
+        
+        document.getElementById('rewardSection').innerHTML = isWin ? 
+            `BGM「${bgmName}」を入手しました！` : "報酬：特になし";
+            
+        document.getElementById('expMessage').innerText = isWin ? 
+            "レベルが10上がりました！" : "レベルが5上がりました。";
+    </script>
+</body>
+</html>
