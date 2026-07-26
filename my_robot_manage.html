@@ -68,10 +68,11 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
 <script>
-    // Firebase初期化
+    // Firebase初期化（databaseURLを追加しました）
     const firebaseConfig = {
         apiKey: "AIzaSyCJ5h0o9RdNf19wJYXQRzd7rfJDazeRmwc",
         authDomain: "merodigear.firebaseapp.com",
+        databaseURL: "https://merodigear-default-rtdb.firebaseio.com/", // ★ここを追加
         projectId: "merodigear",
         storageBucket: "merodigear.firebasestorage.app",
         messagingSenderId: "863493263922",
@@ -193,7 +194,7 @@
             modifyBtn.onclick = () => { location.href = `modify.html?id=${slotId}`; };
         }
 
-        // ★ Firebaseの掲示板へ機体を登録する処理に変更
+        // Firebaseの掲示板へ機体を登録する処理
         const postBtn = document.getElementById('postToBoardBtn');
         if (postBtn) {
             postBtn.onclick = async () => {
