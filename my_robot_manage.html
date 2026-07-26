@@ -69,15 +69,15 @@
 
 <script>
     // Firebase初期化（databaseURLを追加しました）
-    const firebaseConfig = {
-        apiKey: "AIzaSyCJ5h0o9RdNf19wJYXQRzd7rfJDazeRmwc",
-        authDomain: "merodigear.firebaseapp.com",
-        databaseURL: "https://merodigear-default-rtdb.firebaseio.com/", // ★ここを追加
-        projectId: "merodigear",
-        storageBucket: "merodigear.firebasestorage.app",
-        messagingSenderId: "863493263922",
-        appId: "1:863493263922:web:637be57f738317b2a0622b",
-        measurementId: "G-34K1QLXL4S"
+const firebaseConfig = {
+    apiKey: "AIzaSyCJ5h0o9RdNf19wJYXQRzd7rfJDazeRmwc",
+    authDomain: "merodigear.firebaseapp.com",
+    databaseURL: "https://merodigear-e4e97-default-rtdb.asia-southeast1.firebasedatabase.app", // ★ここを書き換え
+    projectId: "merodigear",
+    storageBucket: "merodigear.firebasestorage.app",
+    messagingSenderId: "863493263922",
+    appId: "1:863493263922:web:637be57f738317b2a0622b",
+    measurementId: "G-34K1QLXL4S"
     };
     if (!firebase.apps.length) {
         firebase.initializeApp(firebaseConfig);

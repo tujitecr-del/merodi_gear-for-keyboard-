@@ -40,10 +40,11 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
     <script>
-        // Firebase初期化
+        // Firebase初期化（databaseURLを追加しました）
         const firebaseConfig = {
             apiKey: "AIzaSyCJ5h0o9RdNf19wJYXQRzd7rfJDazeRmwc",
             authDomain: "merodigear.firebaseapp.com",
+            databaseURL: "https://merodigear-e4e97-default-rtdb.asia-southeast1.firebasedatabase.app", // ★追加
             projectId: "merodigear",
             storageBucket: "merodigear.firebasestorage.app",
             messagingSenderId: "863493263922",
@@ -69,7 +70,7 @@
         const MAX_DISPLAY_COUNT = 300; 
 
         let currentSortMode = 'newest';
-        let cachedPosts = []; // Firebaseから取得したデータを保持するキャッシュ
+        let cachedPosts = []; 
 
         // Firebaseからデータを取得して描画する
         async function fetchAndRenderBoard() {
@@ -77,12 +78,10 @@
             list.innerHTML = "<p>読み込み中...</p>";
 
             try {
-                // Firebaseの 'board_posts' からデータを取得
                 const snapshot = await database.ref('board_posts').once('value');
                 const data = snapshot.val();
                 
                 if (data) {
-                    // Firebaseのオブジェクト構造を配列に変換（キーをidとして持たせる）
                     cachedPosts = Object.keys(data).map(key => ({
                         id: key,
                         ...data[key]
@@ -113,7 +112,9 @@
             const displayList = allPosts
                 .filter(post => {
                     if (!post.robot) return false;
-                    const title = post.robot.bgmTitle;
+                    
+                    // ★ BGMタイトルの参照先を修正 (post.robot.bgmData.title)
+                    const title = post.robot.bgmData?.title;
                     if (title && BANNED_SONGS.includes(title)) return false;
 
                     if (searchKeyword && !post.robot.name.toLowerCase().includes(searchKeyword)) {
@@ -197,7 +198,6 @@
             location.href = 'battle.html';
         }
 
-        // 初回ロード時にFirebaseからデータ取得を実行
         fetchAndRenderBoard();
     </script>
 </body>
