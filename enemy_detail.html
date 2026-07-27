@@ -12,93 +12,101 @@
 </head>
 <body>
     <div class="container" id="detail-container">
-    <div style="text-align: center;">
-        <img id="avatar" class="avatar-img" src="">
-        <h2 id="pilot-name"></h2>
+        <div style="text-align: center;">
+            <img id="avatar" class="avatar-img" src="">
+            <h2 id="pilot-name"></h2>
+        </div>
+
+        <div class="stat-box">
+            <h3>機体情報</h3>
+            <p>機体名: <span id="robot-name"></span></p>
+            <p>レベル: <span id="robot-level"></span></p>
+            <p>サイズ: <span id="robot-size"></span></p>
+            <p>機体色: <span id="robot-color"></span></p>
+            <p>遠距離武器: <span id="robot-weapon"></span></p>
+        </div>
+
+        <div class="stat-box">
+            <h3>ステータス</h3>
+            <p>攻撃力: <span id="robot-atk"></span></p>
+            <p>防御力: <span id="robot-def"></span></p>
+            <p>素早さ: <span id="robot-spd"></span></p>
+        </div>
+
+        <div class="stat-box">
+            <h3>BGM情報</h3>
+            <p>曲名: <span id="bgm-title"></span></p>
+            <p>作曲者: <span id="bgm-author"></span></p>
+            <p>コメント: <span id="bgm-comment"></span></p>
+        </div>
+
+        <!-- 機体ビジュアル描画用キャンバスを上に移動しました -->
+        <div style="text-align: center; margin: 20px 0;">
+            <canvas id="robot-visual" width="400" height="350" style="background: #000; border: 3px solid #00fff0; width: 100%; max-width: 400px; height: auto;"></canvas>
+        </div>
+
+        <!-- ボタンにIDを付与し、JS側からイベントを安全に紐付けます -->
+        <button id="battle-btn" style="background: #e94560; color: white; width: 100%; margin-top: 10px; padding: 12px; font-size: 1rem; cursor: pointer;">
+            この機体とバトる！
+        </button>
     </div>
 
-    <div class="stat-box">
-        <h3>機体情報</h3>
-        <p>機体名: <span id="robot-name"></span></p>
-        <p>レベル: <span id="robot-level"></span></p>
-        <p>サイズ: <span id="robot-size"></span></p>
-        <p>機体色: <span id="robot-color"></span></p>
-        <p>遠距離武器: <span id="robot-weapon"></span></p>
+    <div class="footer-area" style="text-align: center; margin-top: 20px; padding: 10px;">
+        <button onclick="location.href='enemy_list.html'" style="padding: 10px 20px; font-size: 1rem; cursor: pointer;">戻る</button>
     </div>
-
-    <div class="stat-box">
-        <p>攻撃力: <span id="robot-atk"></span></p>
-        <p>防御力: <span id="robot-def"></span></p>
-        <p>素早さ: <span id="robot-spd"></span></p>
-    </div>
-
-    <div class="stat-box">
-        <h3>BGM情報</h3>
-        <p>曲名: <span id="bgm-title"></span></p>
-        <p>作曲者: <span id="bgm-author"></span></p>
-        <p>コメント: <span id="bgm-comment"></span></p>
-    </div>
-
-    <button onclick="startBattle('${target.id}')" style="background: #e94560; color: white; width: 100%; margin-top: 20px;">
-        この機体とバトる！
-    </button>
-</div>
-
 
 <script>
-    function startBattle(enemyId) {
-        // 対戦相手のIDをURLパラメータとして渡して遷移
-        location.href = `battle.html?enemyId=${enemyId}`;
-    }
-</script>
-
-<script>
-const params = new URLSearchParams(window.location.search);
+    const params = new URLSearchParams(window.location.search);
     const id = params.get('id');
     const boardList = JSON.parse(localStorage.getItem('board_posts')) || [];
     const target = boardList.find(e => e.id == id);
 
+    window.onload = () => {  
+        if (target) {
+            // アバター情報
+            if (target.avatar) {
+                document.getElementById('avatar').src = target.avatar.icon || "";
+                document.getElementById('pilot-name').innerText = target.avatar.name || "名無しパイロット";
+            }
 
-window.onload = () => {   
-    if (target) {
-        // アバター情報
-        document.getElementById('avatar').src = target.avatar.icon;
-        document.getElementById('pilot-name').innerText = target.avatar.name;
+            // 機体情報
+            if (target.robot) {
+                document.getElementById('robot-name').innerText = target.robot.name || "無名機体";
+                document.getElementById('robot-level').innerText = target.robot.level || 1;
+                document.getElementById('robot-size').innerText = target.robot.size || "不明";
+                document.getElementById('robot-color').innerText = target.robot.color || "不明";
+                document.getElementById('robot-weapon').innerText = target.robot.weapon || "なし";
+                document.getElementById('robot-atk').innerText = target.robot.atk || 0;
+                document.getElementById('robot-def').innerText = target.robot.def || 0;
+                document.getElementById('robot-spd').innerText = target.robot.spd || 0;
 
-        // 機体情報
-        document.getElementById('robot-name').innerText = target.robot.name;
-        document.getElementById('robot-level').innerText = target.robot.level || 1;
-        document.getElementById('robot-size').innerText = target.robot.size || "不明";
-        document.getElementById('robot-color').innerText = target.robot.color || "不明";
-        document.getElementById('robot-weapon').innerText = target.robot.weapon || "なし";
-        document.getElementById('robot-atk').innerText = target.robot.atk;
-        document.getElementById('robot-def').innerText = target.robot.def;
-        document.getElementById('robot-spd').innerText = target.robot.spd;
+                // BGM情報
+                const bgm = target.robot.bgmData;
+                if (bgm) {
+                    document.getElementById('bgm-title').innerText = bgm.title || "曲名なし";
+                    document.getElementById('bgm-author').innerText = bgm.author || "不明";
+                    document.getElementById('bgm-comment').innerText = bgm.comment || "なし";
+                } else {
+                    document.getElementById('bgm-title').innerText = "なし";
+                    document.getElementById('bgm-author').innerText = "不明";
+                    document.getElementById('bgm-comment').innerText = "なし";
+                }
 
-        // BGM情報（修正済み）
-        // 1. まずは画面にタイトルなどを表示
-        document.getElementById('bgm-title').innerText = target.robot.bgmTitle || "なし";
-        
-        // 注意: 作成したJSONデータ構造に合わせて author/comment を取得
-        const bgm = target.robot.bgmData;
-        
-        if (bgm) {
-            // ★ここが原因でした：target.robot.bgmTitle ではなく bgm.title を参照します
-            document.getElementById('bgm-title').innerText = bgm.title || "曲名なし";
-            document.getElementById('bgm-author').innerText = bgm.author || "不明";
-            document.getElementById('bgm-comment').innerText = bgm.comment || "なし";
-            
-            currentMelogeData = bgm; 
+                // 機体描画
+                drawRobot(target.robot);
+            }
+
+            // バトルボタンのクリックイベントを設定
+            const battleBtn = document.getElementById('battle-btn');
+            if (battleBtn) {
+                battleBtn.onclick = () => {
+                    location.href = `battle.html?enemyId=${target.id}`;
+                };
+            }
         } else {
-            // BGMデータそのものがない場合のフォールバック
-            document.getElementById('bgm-title').innerText = "なし";
-            document.getElementById('bgm-author').innerText = "不明";
-            document.getElementById('bgm-comment').innerText = "なし";
+            alert("機体データが見つかりませんでした。");
         }
-
-        drawRobot(target.robot);
-    }
-};
+    };
 
     // 機体描画関数
     function drawRobot(stats) {
@@ -138,16 +146,7 @@ window.onload = () => {
             else if (s.type === 'line') { ctx.moveTo(s.x1, s.y1); ctx.lineTo(s.x2, s.y2); ctx.stroke(); }
         });
     }
-
 </script>
-
-<div class="footer-area" style="text-align: center; margin-top: 40px; padding: 20px; border-top: 1px solid #00fff0;">
-    <button onclick="location.href='enemy_list.html'" style="padding: 10px 20px; font-size: 1rem;">戻る</button>
-</div>
-<div style="text-align: center; margin: 20px 0;">
-    <canvas id="robot-visual" width="400" height="350" style="background: #000; border: 3px solid #00fff0;"></canvas>
-     </div>
-
 
 </body>
 </html>
