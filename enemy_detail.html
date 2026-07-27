@@ -40,12 +40,11 @@
             <p>コメント: <span id="bgm-comment"></span></p>
         </div>
 
-        <!-- 機体ビジュアル描画用キャンバスを上に移動しました -->
+        <!-- 機体ビジュアル描画用キャンバス -->
         <div style="text-align: center; margin: 20px 0;">
             <canvas id="robot-visual" width="400" height="350" style="background: #000; border: 3px solid #00fff0; width: 100%; max-width: 400px; height: auto;"></canvas>
         </div>
 
-        <!-- ボタンにIDを付与し、JS側からイベントを安全に紐付けます -->
         <button id="battle-btn" style="background: #e94560; color: white; width: 100%; margin-top: 10px; padding: 12px; font-size: 1rem; cursor: pointer;">
             この機体とバトる！
         </button>
@@ -57,9 +56,15 @@
 
 <script>
     const params = new URLSearchParams(window.location.search);
-    const id = params.get('id');
+    // id または enemyId のどちらで渡されても受け取れるように変更
+    const targetId = params.get('id') || params.get('enemyId');
     const boardList = JSON.parse(localStorage.getItem('board_posts')) || [];
-    const target = boardList.find(e => e.id == id);
+    
+    // デバッグ用にコンソールを出力（もし動かない場合はF12のコンソールを確認できます）
+    console.log("取得したID:", targetId);
+    console.log("掲示板リスト:", boardList);
+
+    const target = boardList.find(e => String(e.id) === String(targetId));
 
     window.onload = () => {  
         if (target) {
@@ -104,7 +109,7 @@
                 };
             }
         } else {
-            alert("機体データが見つかりませんでした。");
+            alert("機体データが見つかりませんでした。(ID: " + targetId + ")");
         }
     };
 
