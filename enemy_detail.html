@@ -6,7 +6,7 @@
     <style>
         body { background: #050510; color: #00fff0; font-family: 'Courier New', monospace; padding: 20px; }
         .container { max-width: 500px; margin: 0 auto; border: 2px solid #00fff0; padding: 20px; background: rgba(0, 0, 0, 0.7); }
-        .avatar-img { width: 128px; height: 128px; border: 3px solid #00fff0; margin-bottom: 20px; }
+        .avatar-img { width: 128px; height: 128px; border: 3px solid #00fff0; margin-bottom: 20px; object-fit: cover; }
         .stat-box { border-top: 1px solid #00fff0; padding-top: 10px; margin-top: 10px; }
     </style>
 </head>
@@ -14,30 +14,30 @@
     <div class="container" id="detail-container">
         <div style="text-align: center;">
             <img id="avatar" class="avatar-img" src="">
-            <h2 id="pilot-name"></h2>
+            <h2 id="pilot-name">読み込み中...</h2>
         </div>
 
         <div class="stat-box">
             <h3>機体情報</h3>
-            <p>機体名: <span id="robot-name"></span></p>
-            <p>レベル: <span id="robot-level"></span></p>
-            <p>サイズ: <span id="robot-size"></span></p>
-            <p>機体色: <span id="robot-color"></span></p>
-            <p>遠距離武器: <span id="robot-weapon"></span></p>
+            <p>機体名: <span id="robot-name">-</span></p>
+            <p>レベル: <span id="robot-level">-</span></p>
+            <p>サイズ: <span id="robot-size">-</span></p>
+            <p>機体色: <span id="robot-color">-</span></p>
+            <p>遠距離武器: <span id="robot-weapon">-</span></p>
         </div>
 
         <div class="stat-box">
             <h3>ステータス</h3>
-            <p>攻撃力: <span id="robot-atk"></span></p>
-            <p>防御力: <span id="robot-def"></span></p>
-            <p>素早さ: <span id="robot-spd"></span></p>
+            <p>攻撃力: <span id="robot-atk">-</span></p>
+            <p>防御力: <span id="robot-def">-</span></p>
+            <p>素早さ: <span id="robot-spd">-</span></p>
         </div>
 
         <div class="stat-box">
             <h3>BGM情報</h3>
-            <p>曲名: <span id="bgm-title"></span></p>
-            <p>作曲者: <span id="bgm-author"></span></p>
-            <p>コメント: <span id="bgm-comment"></span></p>
+            <p>曲名: <span id="bgm-title">-</span></p>
+            <p>作曲者: <span id="bgm-author">-</span></p>
+            <p>コメント: <span id="bgm-comment">-</span></p>
         </div>
 
         <!-- 機体ビジュアル描画用キャンバス -->
@@ -45,7 +45,7 @@
             <canvas id="robot-visual" width="400" height="350" style="background: #000; border: 3px solid #00fff0; width: 100%; max-width: 400px; height: auto;"></canvas>
         </div>
 
-        <button id="battle-btn" style="background: #e94560; color: white; width: 100%; margin-top: 10px; padding: 12px; font-size: 1rem; cursor: pointer;">
+        <button id="battle-btn" style="background: #e94560; color: white; width: 100%; margin-top: 10px; padding: 12px; font-size: 1rem; cursor: pointer; display: none;">
             この機体とバトる！
         </button>
     </div>
@@ -54,104 +54,167 @@
         <button onclick="location.href='enemy_list.html'" style="padding: 10px 20px; font-size: 1rem; cursor: pointer;">戻る</button>
     </div>
 
-<script>
-    const params = new URLSearchParams(window.location.search);
-    // id または enemyId のどちらで渡されても受け取れるように変更
-    const targetId = params.get('id') || params.get('enemyId');
-    const boardList = JSON.parse(localStorage.getItem('board_posts')) || [];
-    
-    // デバッグ用にコンソールを出力（もし動かない場合はF12のコンソールを確認できます）
-    console.log("取得したID:", targetId);
-    console.log("掲示板リスト:", boardList);
+    <!-- Firebase SDK の読み込み -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
-    const target = boardList.find(e => String(e.id) === String(targetId));
+    <script>
+        // Firebase初期化
+        const firebaseConfig = {
+            apiKey: "AIzaSyCJ5h0o9RdNf19wJYXQRzd7rfJDazeRmwc",
+            authDomain: "merodigear.firebaseapp.com",
+            databaseURL: "https://merodigear-e4e97-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "merodigear",
+            storageBucket: "merodigear.firebasestorage.app",
+            messagingSenderId: "863493263922",
+            appId: "1:863493263922:web:637be57f738317b2a0622b",
+            measurementId: "G-34K1QLXL4S"
+        };
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const database = firebase.database();
 
-    window.onload = () => {  
-        if (target) {
-            // アバター情報
-            if (target.avatar) {
-                document.getElementById('avatar').src = target.avatar.icon || "";
-                document.getElementById('pilot-name').innerText = target.avatar.name || "名無しパイロット";
+        // URLパラメータからIDを取得
+        const params = new URLSearchParams(window.location.search);
+        const targetId = params.get('id') || params.get('enemyId');
+
+        async function loadTargetDetail() {
+            if (!targetId) {
+                alert("機体IDが指定されていません。");
+                return;
             }
 
-            // 機体情報
-            if (target.robot) {
-                document.getElementById('robot-name').innerText = target.robot.name || "無名機体";
-                document.getElementById('robot-level').innerText = target.robot.level || 1;
-                document.getElementById('robot-size').innerText = target.robot.size || "不明";
-                document.getElementById('robot-color').innerText = target.robot.color || "不明";
-                document.getElementById('robot-weapon').innerText = target.robot.weapon || "なし";
-                document.getElementById('robot-atk').innerText = target.robot.atk || 0;
-                document.getElementById('robot-def').innerText = target.robot.def || 0;
-                document.getElementById('robot-spd').innerText = target.robot.spd || 0;
+            try {
+                // Firebaseの該当IDのデータを直接取得
+                const snapshot = await database.ref(`board_posts/${targetId}`).once('value');
+                const target = snapshot.val();
 
-                // BGM情報
-                const bgm = target.robot.bgmData;
-                if (bgm) {
-                    document.getElementById('bgm-title').innerText = bgm.title || "曲名なし";
-                    document.getElementById('bgm-author').innerText = bgm.author || "不明";
-                    document.getElementById('bgm-comment').innerText = bgm.comment || "なし";
+                if (target && target.robot) {
+                    // アバター情報
+                    if (target.avatar) {
+                        document.getElementById('avatar').src = target.avatar.icon || "";
+                        document.getElementById('pilot-name').innerText = target.avatar.name || "名無しパイロット";
+                    }
+
+                    // 機体情報
+                    document.getElementById('robot-name').innerText = target.robot.name || "無名機体";
+                    document.getElementById('robot-level').innerText = target.robot.level || 1;
+                    document.getElementById('robot-size').innerText = target.robot.size || "不明";
+                    document.getElementById('robot-color').innerText = target.robot.color || "不明";
+                    document.getElementById('robot-weapon').innerText = target.robot.weapon || "なし";
+                    document.getElementById('robot-atk').innerText = target.robot.atk || 0;
+                    document.getElementById('robot-def').innerText = target.robot.def || 0;
+                    document.getElementById('robot-spd').innerText = target.robot.spd || 0;
+
+                    // BGM情報
+                    const bgm = target.robot.bgmData;
+                    if (bgm) {
+                        document.getElementById('bgm-title').innerText = bgm.title || "曲名なし";
+                        document.getElementById('bgm-author').innerText = bgm.author || bgm.composer || "不明";
+                        document.getElementById('bgm-comment').innerText = bgm.comment || "なし";
+                    } else {
+                        document.getElementById('bgm-title').innerText = "なし";
+                        document.getElementById('bgm-author').innerText = "不明";
+                        document.getElementById('bgm-comment').innerText = "なし";
+                    }
+
+                    // 機体描画
+                    drawRobot(target.robot);
+
+                    // バトルボタンを表示してイベント設定
+                    const battleBtn = document.getElementById('battle-btn');
+                    if (battleBtn) {
+                        battleBtn.style.display = 'block';
+                        battleBtn.onclick = () => {
+                            startBattle(target.robot, target.avatar);
+                        };
+                    }
                 } else {
-                    document.getElementById('bgm-title').innerText = "なし";
-                    document.getElementById('bgm-author').innerText = "不明";
-                    document.getElementById('bgm-comment').innerText = "なし";
+                    alert("指定された機体データが見つかりませんでした。(ID: " + targetId + ")");
                 }
-
-                // 機体描画
-                drawRobot(target.robot);
+            } catch (error) {
+                console.error("データ取得エラー:", error);
+                alert("データの読み込みに失敗しました。");
             }
+        }
 
-            // バトルボタンのクリックイベントを設定
-            const battleBtn = document.getElementById('battle-btn');
-            if (battleBtn) {
-                battleBtn.onclick = () => {
-                    location.href = `battle.html?enemyId=${target.id}`;
+        // バトル開始処理（一覧画面と共通）
+        function startBattle(enemyRobotData, enemyAvatarData) {
+            if (!enemyRobotData.bgmData) {
+                enemyRobotData.bgmData = {
+                    title: "デフォルト曲",
+                    composer: "tujitecr",
+                    comment: "デフォルト曲",
+                    sequence: "60,62,60,62,60,62,60,62,64,64,64,0,60,62,60,62,60,62,60,62,64,64,64,0,67,69,67,69,67,69,67,69,71,71,71,0,67,69,67,69,67,69,67,69,71,71,71,0,0,62,64,65,65,64,62,0,62,64,65,65,64,62,0,67,69,69,69,-,67,69,69,69,-,0,60,60,600", 
+                    tempo: 0.2
                 };
             }
-        } else {
-            alert("機体データが見つかりませんでした。(ID: " + targetId + ")");
+            
+            const myRobotId = localStorage.getItem('activeRobotId');
+            const myRobotData = JSON.parse(localStorage.getItem(`robot_slot_${myRobotId}`));
+
+            if (!myRobotData) {
+                alert("搭乗中の機体が見つかりません！格納庫で搭乗してください。");
+                return;
+            }
+
+            const battleData = {
+                player: {
+                    avatar: { name: localStorage.getItem('pilotName') || "パイロット", icon: localStorage.getItem('avatarImage') },
+                    robot: myRobotData 
+                },
+                enemy: {
+                    avatar: enemyAvatarData || { name: "CPUパイロット" },
+                    robot: enemyRobotData
+                }
+            };
+
+            localStorage.setItem('battleData', JSON.stringify(battleData));
+            location.href = 'battle.html';
         }
-    };
 
-    // 機体描画関数
-    function drawRobot(stats) {
-        const canvas = document.getElementById('robot-visual');
-        if (!canvas) return;
-        const ctx = canvas.getContext('2d');
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // 機体描画関数
+        function drawRobot(stats) {
+            const canvas = document.getElementById('robot-visual');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        const scale = stats.scale || 1.0;
-        const b = (stats.def * 0.0334 * 2) * scale;
-        const a = (stats.atk * 0.0334) * scale;
-        const l = (stats.spd * 0.0334) * scale;
+            const scale = stats.scale || 1.0;
+            const b = (stats.def * 0.0334 * 2) * scale;
+            const a = (stats.atk * 0.0334) * scale;
+            const l = (stats.spd * 0.0334) * scale;
 
-        const shapes = [
-            {"type": "circle", "x": 200, "y": 80, "r": 30},
-            {"type": "rect", "x": 185, "y": 75, "w": 30, "h": 10},
-            {"type": "line", "x1": 200, "y1": 110, "x2": 200, "y2": 220},
-            {"type": "line", "x1": 170, "y1": 220, "x2": 230, "y2": 220},
-            {"type": "line", "x1": 170, "y1": 220, "x2": 170, "y2": 330},
-            {"type": "line", "x1": 230, "y1": 220, "x2": 230, "y2": 330},
-            {"type": "line", "x1": 150, "y1": 130, "x2": 250, "y2": 130},
-            {"type": "line", "x1": 150, "y1": 130, "x2": 120, "y2": 220},
-            {"type": "line", "x1": 250, "y1": 130, "x2": 280, "y2": 220}
-        ];
+            const shapes = [
+                {"type": "circle", "x": 200, "y": 80, "r": 30},
+                {"type": "rect", "x": 185, "y": 75, "w": 30, "h": 10},
+                {"type": "line", "x1": 200, "y1": 110, "x2": 200, "y2": 220},
+                {"type": "line", "x1": 170, "y1": 220, "x2": 230, "y2": 220},
+                {"type": "line", "x1": 170, "y1": 220, "x2": 170, "y2": 330},
+                {"type": "line", "x1": 230, "y1": 220, "x2": 230, "y2": 330},
+                {"type": "line", "x1": 150, "y1": 130, "x2": 250, "y2": 130},
+                {"type": "line", "x1": 150, "y1": 130, "x2": 120, "y2": 220},
+                {"type": "line", "x1": 250, "y1": 130, "x2": 280, "y2": 220}
+            ];
 
-        shapes.forEach((s, i) => {
-            ctx.beginPath();
-            ctx.strokeStyle = stats.color || "#4ecca3";
-            ctx.fillStyle = stats.color || "#4ecca3";
-            if (i === 2) ctx.lineWidth = Math.max(1, b);
-            else if (i >= 6) ctx.lineWidth = Math.max(1, a);
-            else if (i >= 3 && i <= 5) ctx.lineWidth = Math.max(1, l);
-            else ctx.lineWidth = 2;
+            shapes.forEach((s, i) => {
+                ctx.beginPath();
+                ctx.strokeStyle = stats.color || "#4ecca3";
+                ctx.fillStyle = stats.color || "#4ecca3";
+                if (i === 2) ctx.lineWidth = Math.max(1, b);
+                else if (i >= 6) ctx.lineWidth = Math.max(1, a);
+                else if (i >= 3 && i <= 5) ctx.lineWidth = Math.max(1, l);
+                else ctx.lineWidth = 2;
 
-            if (s.type === 'circle') { ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }
-            else if (s.type === 'rect') { ctx.fillStyle = "#000"; ctx.fillRect(s.x, s.y, s.w, s.h); }
-            else if (s.type === 'line') { ctx.moveTo(s.x1, s.y1); ctx.lineTo(s.x2, s.y2); ctx.stroke(); }
-        });
-    }
-</script>
+                if (s.type === 'circle') { ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }
+                else if (s.type === 'rect') { ctx.fillStyle = "#000"; ctx.fillRect(s.x, s.y, s.w, s.h); }
+                else if (s.type === 'line') { ctx.moveTo(s.x1, s.y1); ctx.lineTo(s.x2, s.y2); ctx.stroke(); }
+            });
+        }
 
+        // ページ読み込み時にFirebaseからデータを引く
+        loadTargetDetail();
+    </script>
 </body>
 </html>
