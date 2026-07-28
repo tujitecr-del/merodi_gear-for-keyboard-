@@ -2,12 +2,120 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
+    <!-- スマホ対応のビューポート設定を追加 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>機体管理格納庫</title>
+    <style>
+        body { 
+            background: #0f0f1a; 
+            color: #4ecca3; 
+            font-family: sans-serif; 
+            margin: 0;
+            padding: 15px;
+        }
+        #container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: #1a1a2e;
+            border: 2px solid #4ecca3;
+            border-radius: 10px;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+        h2 {
+            font-size: 1.2rem;
+            text-align: center;
+            margin-top: 0;
+            color: #fff;
+        }
+        h3 {
+            font-size: 1.1rem;
+            border-bottom: 1px dashed #4ecca3;
+            padding-bottom: 5px;
+            margin-top: 20px;
+        }
+        section {
+            margin-bottom: 15px;
+        }
+        ul {
+            padding-left: 20px;
+            margin: 10px 0;
+            line-height: 1.6;
+        }
+        li {
+            font-size: 0.95rem;
+            color: #ccc;
+        }
+        li span {
+            color: #fff;
+            font-weight: bold;
+        }
+        button {
+            background: #333;
+            color: #4ecca3;
+            border: 1px solid #4ecca3;
+            padding: 12px;
+            font-size: 0.95rem;
+            cursor: pointer;
+            border-radius: 6px;
+            margin-top: 8px;
+            width: 100%;
+            box-sizing: border-box;
+            font-weight: bold;
+            text-align: center;
+        }
+        button:hover { 
+            background: #4ecca3; 
+            color: #1a1a2e; 
+        }
+        #actions {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            margin: 15px 0;
+        }
+        #bgm-settings {
+            background: rgba(0,0,0,0.3);
+            border: 1px dashed #4ecca3;
+            padding: 12px;
+            margin-top: 10px;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+        select, input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            background: #222;
+            color: #fff;
+            border: 1px solid #4ecca3;
+            border-radius: 4px;
+            box-sizing: border-box;
+            margin-top: 5px;
+            font-size: 0.9rem;
+        }
+        .player-controls {
+            display: flex;
+            gap: 8px;
+        }
+        .player-controls button {
+            margin-top: 5px;
+        }
+        /* キャンバスがスマホからはみ出ないようにレスポンシブ化 */
+        #robot-visual {
+            border: 1px solid #4ecca3;
+            display: block;
+            margin: 15px auto;
+            max-width: 100%;
+            height: auto;
+            background: #000;
+            border-radius: 6px;
+        }
+    </style>
 </head>
 <body>
 
 <div id="container">
-    <h2>機体管理格納庫 - 倉庫No: <span id="val-slot">0</span></h2>
+    <h2>機体管理格納庫<br>倉庫No: <span id="val-slot">0</span></h2>
     
     <section id="robot-info">
         <h3>機体詳細</h3>
@@ -20,15 +128,15 @@
             <li>防御力: <span id="val-def">-</span></li>
             <li>速度: <span id="val-spd">-</span></li>
             <li>武装: <span id="val-weapon">-</span></li>
-            <li>総合評価:<span id="val-rating"></span></li>
+            <li>総合評価: <span id="val-rating"></span></li>
         </ul>
     </section>
 
     <div id="actions">
         <button id="generateBtn">音楽から機体生成</button>
         <button onclick="location.href='modify.html'">機体改造</button>
-        <button onclick="location.href='base.html'">基地へ戻る</button>
-        <button id="postToBoardBtn" style="background: #4ecca3; color: #1a1a2e; margin-top: 10px; width: 100%;">
+        <button onclick="location.href='base.html'" style="background: #222; color: #aaa; border-color: #666;">基地へ戻る</button>
+        <button id="postToBoardBtn" style="background: #4ecca3; color: #1a1a2e; margin-top: 5px;">
             この機体を放置対戦させる（オンライン登録）
         </button>
     </div>
@@ -43,24 +151,24 @@
 
         <button onclick="document.getElementById('bgm-settings').style.display = 'block';">BGMを変更する</button>
 
-        <div id="bgm-settings" style="display: none; border: 1px dashed #4ecca3; padding: 10px; margin-top: 10px;">
-            <p>【方法1】ファイルから変更</p>
+        <div id="bgm-settings" style="display: none;">
+            <p style="margin:0 0 5px 0; font-size:0.9rem;">【方法1】ファイルから変更</p>
             <input type="file" id="bgmFile" accept=".melogefile">
             
-            <p style="margin-top: 10px;">【方法2】獲得済みコレクションから選ぶ</p>
+            <p style="margin:15px 0 5px 0; font-size:0.9rem;">【方法2】獲得済みコレクションから選ぶ</p>
             <select id="collectionSelect" onchange="selectBgmFromCollection(this.value)">
                 <option value="">-- 取得済みBGMを選択 --</option>
             </select>
 
-            <div class="player-controls" style="margin-top: 10px;">
-                <button id="playBtn">▶ 再生</button>
-                <button id="stopBtn">■ 停止</button>
-                <button onclick="document.getElementById('bgm-settings').style.display = 'none';"> 設定を閉じる </button>
+            <div class="player-controls">
+                <button id="playBtn" style="background: #005555; color: #fff;">▶ 再生</button>
+                <button id="stopBtn" style="background: #550000; color: #fff;">■ 停止</button>
             </div>
+            <button onclick="document.getElementById('bgm-settings').style.display = 'none';" style="background: #333; color: #aaa; border-color: #666; margin-top: 10px;"> 設定を閉じる </button>
         </div>
     </section>
 
-    <canvas id="robot-visual" width="400" height="400" style="border:1px solid #4ecca3; display:block; margin:10px auto;"></canvas>
+    <canvas id="robot-visual" width="400" height="400"></canvas>
 </div>
 
 <!-- Firebase SDK の読み込み -->
@@ -68,16 +176,15 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
 <script>
-    // Firebase初期化（databaseURLを追加しました）
-const firebaseConfig = {
-    apiKey: "AIzaSyCJ5h0o9RdNf19wJYXQRzd7rfJDazeRmwc",
-    authDomain: "merodigear.firebaseapp.com",
-    databaseURL: "https://merodigear-e4e97-default-rtdb.asia-southeast1.firebasedatabase.app", // ★ここを書き換え
-    projectId: "merodigear",
-    storageBucket: "merodigear.firebasestorage.app",
-    messagingSenderId: "863493263922",
-    appId: "1:863493263922:web:637be57f738317b2a0622b",
-    measurementId: "G-34K1QLXL4S"
+    const firebaseConfig = {
+        apiKey: "AIzaSyCJ5h0o9RdNf19wJYXQRzd7rfJDazeRmwc",
+        authDomain: "merodigear.firebaseapp.com",
+        databaseURL: "https://merodigear-e4e97-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "merodigear",
+        storageBucket: "merodigear.firebasestorage.app",
+        messagingSenderId: "863493263922",
+        appId: "1:863493263922:web:637be57f738317b2a0622b",
+        measurementId: "G-34K1QLXL4S"
     };
     if (!firebase.apps.length) {
         firebase.initializeApp(firebaseConfig);
@@ -87,7 +194,6 @@ const firebaseConfig = {
     let currentMelogeData = null;   
     let slotId = "0";
 
-    // --- 1. Playback エンジン ---
     const Playback = {
         audioCtx: null, masterGain: null, playTimeout: null, isPlaying: false, currentTempo: 0.2,
         init() {
@@ -136,7 +242,6 @@ const firebaseConfig = {
         }
     };
 
-    // --- 2. メインロジック ---
     window.addEventListener('DOMContentLoaded', () => {
         const urlParams = new URLSearchParams(window.location.search);
         slotId = urlParams.get('id') !== null ? urlParams.get('id') : (localStorage.getItem('activeRobotId') || "0");
@@ -194,7 +299,6 @@ const firebaseConfig = {
             modifyBtn.onclick = () => { location.href = `modify.html?id=${slotId}`; };
         }
 
-        // Firebaseの掲示板へ機体を登録する処理
         const postBtn = document.getElementById('postToBoardBtn');
         if (postBtn) {
             postBtn.onclick = async () => {
@@ -222,7 +326,6 @@ const firebaseConfig = {
                     postBtn.innerText = "送信中...";
                     postBtn.disabled = true;
 
-                    // Firebaseの 'board_posts' にデータをプッシュ追加
                     await database.ref('board_posts').push(postData);
 
                     alert("世界中の放置対戦掲示板に機体を登録しました！");
