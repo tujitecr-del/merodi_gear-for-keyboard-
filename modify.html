@@ -1,43 +1,142 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
+    <meta charset="UTF-8">
+    <!-- スマホ対応のビューポート設定を追加 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>機体改造 - メロディーギア</title>
     <script src="robot_rules.js"></script>
     <script src="robot_manager.js"></script>
-
-    <meta charset="UTF-8">
-    <title>機体改造 - メロディーギア</title>
     <style>
-        body { background: #111; color: #fff; font-family: sans-serif; padding: 20px; }
-        .control { margin-bottom: 15px; }
-        .invalid { color: red; }
+        body { 
+            background: #0f0f1a; 
+            color: #4ecca3; 
+            font-family: sans-serif; 
+            margin: 0;
+            padding: 15px;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: #1a1a2e;
+            border: 2px solid #4ecca3;
+            border-radius: 10px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        h2 {
+            font-size: 1.2rem;
+            text-align: center;
+            margin-top: 0;
+            color: #fff;
+            border-bottom: 1px dashed #4ecca3;
+            padding-bottom: 10px;
+        }
+        .info-box {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid #333;
+            padding: 10px 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 0.95krem;
+            color: #ccc;
+        }
+        .info-box span {
+            color: #fff;
+            font-weight: bold;
+        }
+        .control { 
+            margin-bottom: 15px; 
+            background: rgba(255,255,255,0.03);
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid #2a2a40;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.95rem;
+            color: #ccc;
+        }
+        input[type="number"], select {
+            width: 100%;
+            padding: 10px;
+            background: #222;
+            color: #fff;
+            border: 1px solid #4ecca3;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 1rem;
+            margin-top: 5px;
+        }
+        input[type="color"] {
+            width: 100%;
+            height: 40px;
+            border: 1px solid #4ecca3;
+            border-radius: 6px;
+            background: #222;
+            cursor: pointer;
+            margin-top: 5px;
+            padding: 2px;
+            box-sizing: border-box;
+        }
+        button {
+            background: #333;
+            color: #4ecca3;
+            border: 1px solid #4ecca3;
+            padding: 14px;
+            font-size: 1rem;
+            cursor: pointer;
+            border-radius: 6px;
+            width: 100%;
+            box-sizing: border-box;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 10px;
+        }
+        button:hover { 
+            background: #4ecca3; 
+            color: #1a1a2e; 
+        }
+        #saveBtn {
+            background: #4ecca3;
+            color: #1a1a2e;
+            margin-top: 15px;
+        }
+        #saveBtn:hover {
+            background: #38a385;
+        }
+        .invalid { color: #ff6b6b; }
     </style>
 </head>
 <body>
-    <h2>機体改造: <span id="robotName"></span></h2>
-    <div>最大レベル(総ポイント): <span id="maxLevel">0</span></div>
-    <div>割り振り可能ポイント（残り）: <span id="remPoints" style="color: cyan; font-weight: bold;">0</span></div>
 
-   <div class="control">
-    <label>攻撃力: <span id="baseAtk">0</span> + 
-      <input type="number" id="plusAtk" oninput="updatePoints()" min="0">
-   </label>
-</div>
+<div class="container">
+    <h2>機体改造<br><span id="robotName" style="color:#4ecca3; font-size:1.1rem;">-</span></h2>
+    
+    <div class="info-box">
+        <div>最大レベル(総ポイント): <span id="maxLevel">0</span></div>
+        <div style="margin-top: 5px;">割り振り可能ポイント（残り）: <span id="remPoints" style="color: cyan; font-weight: bold;">0</span></div>
+    </div>
 
-<div class="control">
-    <label>防御力: <span id="baseDef">0</span> + 
-        <input type="number" id="plusDef" oninput="updatePoints()" min="0">
-    </label>
-</div>
-
-<div class="control">
-    <label>速さ: <span id="baseSpd">0</span> + 
-        <input type="number" id="plusSpd" oninput="updatePoints()" min="0">
-    </label>
-</div>
-
-    <!-- 武器（制限をなくし、いつでも自由に変更可能にしました） -->
     <div class="control">
-        <label>武器: </label>
+        <label>攻撃力: <span id="baseAtk" style="color:#fff; font-weight:bold;">0</span> + (追加)</label>
+        <input type="number" id="plusAtk" oninput="updatePoints()" min="0">
+    </div>
+
+    <div class="control">
+        <label>防御力: <span id="baseDef" style="color:#fff; font-weight:bold;">0</span> + (追加)</label>
+        <input type="number" id="plusDef" oninput="updatePoints()" min="0">
+    </div>
+
+    <div class="control">
+        <label>速さ: <span id="baseSpd" style="color:#fff; font-weight:bold;">0</span> + (追加)</label>
+        <input type="number" id="plusSpd" oninput="updatePoints()" min="0">
+    </div>
+
+    <!-- 武器 -->
+    <div class="control">
+        <label>武器選択</label>
         <select id="weapon" onchange="updatePoints()">
             <option value="none">なし</option>
             <option value="machinegun">マシンガン</option>
@@ -48,12 +147,13 @@
 
     <!-- カラー -->
     <div class="control">
-        <label>カラー: </label>
+        <label>機体カラー</label>
         <input type="color" id="color" oninput="updatePoints()">
     </div>
 
     <button id="saveBtn" onclick="saveData()">改造を確定</button>
-    <button onclick="history.back()">戻る</button>
+    <button onclick="history.back()" style="background: #222; color: #aaa; border-color: #666;">戻る</button>
+</div>
 
 <script>
     const params = new URLSearchParams(window.location.search);
@@ -131,7 +231,6 @@
         remDisplay.innerText = rem;
         remDisplay.className = '';
 
-        // 特殊なエラーチェックを撤廃したため、いつでも保存ボタンは押せる状態にします
         document.getElementById('saveBtn').disabled = false;
     }
 
