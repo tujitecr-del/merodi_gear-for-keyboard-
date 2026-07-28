@@ -2,90 +2,120 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
+    <!-- スマホ対応のビューポート設定を追加 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>格納庫 - メロディーギア</title>
     <style>
-body {
-    background-color: #2c3e50;
-    color: #ecf0f1;
-}
+        body {
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            font-family: sans-serif;
+            margin: 0;
+            padding: 10px;
+        }
 
-.hangar-grid {
-    display: grid;
-    /* 1. 横幅を稼ぐため、1列（横長）を基本にします */
-    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); 
-    gap: 15px;
-    padding: 10px;
-}
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 10px;
+        }
 
-/* 2. 箱を横長にし、高さを固定しない（文字が増えると伸びる） */
-.slot-item {
-    border: 2px solid #ecf0f1;
-    padding: 20px;
-    background: #34495e; /* 暗い背景 */
-    border-radius: 12px;
-    
-    /* 横長のデザインにするための設定 */
-    display: flex;
-    flex-direction: row; /* 3. 横並びにする */
-    justify-content: space-between; /* 両端に配置 */
-    align-items: center; /* 縦方向の中央 */
-    min-height: 80px; /* 最低限の高さ */
-}
+        h1 {
+            font-size: 1.5rem;
+            text-align: center;
+        }
 
-/* 機体名と曲名の部分 */
-.slot-name-area {
-    flex-grow: 1; /* 4. 残った幅を全部使う */
-    margin-right: 20px; /* ボタンとの距離 */
-}
+        .backup-area {
+            background: #34495e;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
 
-/* 5. どんなに長い名前でも、絶対に枠外に出さない（自動改行） */
-.robot-name, .bgm-title {
-    color: #ecf0f1; /* 白い文字 */
-    margin: 0;
-    
-    /* 自動改行のための設定 */
-    word-wrap: break-word; 
-    overflow-wrap: break-word;
-}
+        .backup-area h3 {
+            margin-top: 0;
+            font-size: 1.1rem;
+        }
 
-.robot-name {
-    font-size: 1.2rem;
-    font-weight: bold;
-}
+        .backup-area button {
+            background: #1abc9c;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .backup-area button:hover { background: #16a085; }
 
-.bgm-title {
-    font-size: 0.9rem;
-    color: #bdc3c7; /* 曲名は少し暗めの白に */
-    margin-top: 5px;
-}
+        .hangar-grid {
+            display: grid;
+            /* スマホの画面幅に合わせるため 100% 基準に変更 */
+            grid-template-columns: minmax(100%, 1fr); 
+            gap: 12px;
+        }
 
-/* 管理ボタン */
-.slot-item button {
-    background: #e67e22; /* 目立つ色に */
-    color: white;
-    border: none;
-    padding: 12px 24px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 1rem;
-    font-weight: bold;
-    min-width: 100px;
-    
-    /* 6. ボタン自体も自動的に折りたたまれないように設定 */
-    flex-shrink: 0; 
-}
+        /* スロット全体のデザイン */
+        .slot-item {
+            border: 2px solid #ecf0f1;
+            padding: 15px;
+            background: #34495e;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+        }
 
-.button-area { display: flex; gap: 10px; }
+        .slot-name-area {
+            flex-grow: 1;
+            margin-right: 15px;
+            word-wrap: break-word; 
+            overflow-wrap: break-word;
+        }
 
-/* BGMタイトルを控えめに表示する */
-.bgm-title {
-    font-size: 0.75rem !important; /* 文字を小さく */
-    color: #7f8c8d !important;      /* 薄いグレーにして目立たなく */
-    margin-top: 2px !important;
-    font-style: italic;             /* 斜体にして注釈っぽく */
-}
+        .robot-name {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #ecf0f1;
+            margin: 0;
+        }
 
-  </style>
+        .bgm-title {
+            font-size: 0.75rem !important; 
+            color: #7f8c8d !important;     
+            margin-top: 2px !important;
+            font-style: italic;             
+        }
+
+        /* ボタンエリアと各ボタン */
+        .button-area { 
+            display: flex; 
+            flex-direction: column;
+            gap: 8px; 
+            flex-shrink: 0; 
+        }
+
+        .slot-item button {
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: bold;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .btn-manage { background: #e67e22; }
+        .btn-manage:hover { background: #d35400; }
+
+        .btn-equip { background: #f39c12; }
+        .btn-equip:hover { background: #d68910; }
+    </style>
 </head>
 <body>
 
@@ -96,10 +126,12 @@ body {
         <h3>全データバックアップ</h3>
         <button onclick="exportAllData()">全機体データをコピー</button>
         <button onclick="importAllData()">全機体データを復元</button>
-        <button onclick="location.href='base.html'">基地へ戻る</button>
+        <br>
+        <button onclick="location.href='base.html'" style="background: #7f8c8d; margin-top: 10px;">基地へ戻る</button>
     </div>
 
     <div id="hangar" class="hangar-grid"></div>
+</div>
 
 <script>
     const hangar = document.getElementById('hangar');
@@ -122,27 +154,25 @@ body {
             const isSelected = (activeRobotId == i);
 
             const div = document.createElement('div');
-
             const slotNum = String(i).padStart(2, '0'); 
 
-            // デザイン用のクラスを設定
-div.innerHTML = `
-    <div class="slot-item">
-        <div class="slot-name-area">
-            <div class="robot-name">
-                [No.${slotNum}] ${name} 
-                <span style="font-size: 0.8em; color: #f1c40f;">(LV: ${level})</span>
-            </div>
-            <div class="bgm-title"></div>
-            ${isSelected ? '<div style="color:orange; font-weight:bold;">===★搭乗中★===</div>' : ''}
-        </div>
-        
-        <div class="button-area" style="display: flex; gap: 10px;">
-            <button onclick="location.href='my_robot_manage.html?id=${i}'">管理</button>
-            ${robot ? `<button onclick="equipRobot('${i}')" style="background: orange; color: white;">搭乗する</button>` : ''}
-        </div>
-    </div>
-`;
+            div.innerHTML = `
+                <div class="slot-item">
+                    <div class="slot-name-area">
+                        <div class="robot-name">
+                            [No.${slotNum}] ${name} 
+                            <span style="font-size: 0.8em; color: #f1c40f;">(LV: ${level})</span>
+                        </div>
+                        <div class="bgm-title"></div>
+                        ${isSelected ? '<div style="color:#2ecc71; font-weight:bold; font-size:0.85rem; margin-top:4px;">===★搭乗中★===</div>' : ''}
+                    </div>
+                    
+                    <div class="button-area">
+                        <button class="btn-manage" onclick="location.href='my_robot_manage.html?id=${i}'">管理</button>
+                        ${robot ? `<button class="btn-equip" onclick="equipRobot('${i}')">搭乗する</button>` : ''}
+                    </div>
+                </div>
+            `;
             hangar.appendChild(div);
         }
     }
