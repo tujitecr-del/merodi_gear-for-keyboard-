@@ -2,19 +2,91 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
+    <!-- スマホ対応のビューポート設定を追加 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>機体詳細 - 放置対戦掲示板</title>
     <style>
-        body { background: #050510; color: #00fff0; font-family: 'Courier New', monospace; padding: 20px; }
-        .container { max-width: 500px; margin: 0 auto; border: 2px solid #00fff0; padding: 20px; background: rgba(0, 0, 0, 0.7); }
-        .avatar-img { width: 128px; height: 128px; border: 3px solid #00fff0; margin-bottom: 20px; object-fit: cover; }
-        .stat-box { border-top: 1px solid #00fff0; padding-top: 10px; margin-top: 10px; }
+        body { 
+            background: #050510; 
+            color: #00fff0; 
+            font-family: 'Courier New', monospace; 
+            margin: 0;
+            padding: 15px; 
+        }
+        .container { 
+            max-width: 500px; 
+            margin: 0 auto; 
+            border: 2px solid #00fff0; 
+            padding: 15px; 
+            background: rgba(0, 0, 0, 0.85); 
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+        .avatar-img { 
+            width: 100px; 
+            height: 100px; 
+            border: 2px solid #00fff0; 
+            margin-bottom: 10px; 
+            object-fit: cover; 
+            border-radius: 50%;
+        }
+        .stat-box { 
+            border-top: 1px dashed #00fff0; 
+            padding-top: 10px; 
+            margin-top: 15px; 
+        }
+        .stat-box h3 {
+            font-size: 1rem;
+            margin: 0 0 8px 0;
+            color: #fff;
+        }
+        .stat-box p {
+            margin: 4px 0;
+            font-size: 0.9rem;
+            word-break: break-all;
+        }
+        button {
+            border-radius: 6px;
+            font-weight: bold;
+            box-sizing: border-box;
+        }
+        #battle-btn {
+            background: #e94560; 
+            color: white; 
+            width: 100%; 
+            margin-top: 15px; 
+            padding: 14px; 
+            font-size: 1rem; 
+            cursor: pointer; 
+            border: 1px solid #ff6b81;
+            display: none; 
+        }
+        #battle-btn:hover {
+            background: #ff6b81;
+        }
+        .footer-area {
+            text-align: center; 
+            margin-top: 15px; 
+        }
+        .footer-area button {
+            background: #111;
+            color: #00fff0;
+            border: 1px solid #00fff0;
+            padding: 10px 25px; 
+            font-size: 0.95rem; 
+            cursor: pointer;
+        }
+        .footer-area button:hover {
+            background: #00fff0;
+            color: #050510;
+        }
     </style>
 </head>
 <body>
     <div class="container" id="detail-container">
         <div style="text-align: center;">
             <img id="avatar" class="avatar-img" src="">
-            <h2 id="pilot-name">読み込み中...</h2>
+            <h2 id="pilot-name" style="font-size: 1.1rem; margin: 5px 0 15px 0;">読み込み中...</h2>
         </div>
 
         <div class="stat-box">
@@ -41,17 +113,17 @@
         </div>
 
         <!-- 機体ビジュアル描画用キャンバス -->
-        <div style="text-align: center; margin: 20px 0;">
-            <canvas id="robot-visual" width="400" height="350" style="background: #000; border: 3px solid #00fff0; width: 100%; max-width: 400px; height: auto;"></canvas>
+        <div style="text-align: center; margin: 15px 0 0 0;">
+            <canvas id="robot-visual" width="400" height="350" style="background: #000; border: 2px solid #00fff0; width: 100%; max-width: 350px; height: auto; border-radius: 4px;"></canvas>
         </div>
 
-        <button id="battle-btn" style="background: #e94560; color: white; width: 100%; margin-top: 10px; padding: 12px; font-size: 1rem; cursor: pointer; display: none;">
+        <button id="battle-btn">
             この機体とバトる！
         </button>
     </div>
 
-    <div class="footer-area" style="text-align: center; margin-top: 20px; padding: 10px;">
-        <button onclick="location.href='enemy_list.html'" style="padding: 10px 20px; font-size: 1rem; cursor: pointer;">戻る</button>
+    <div class="footer-area">
+        <button onclick="location.href='enemy_list.html'">戻る</button>
     </div>
 
     <!-- Firebase SDK の読み込み -->
@@ -59,7 +131,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
     <script>
-        // Firebase初期化
         const firebaseConfig = {
             apiKey: "AIzaSyCJ5h0o9RdNf19wJYXQRzd7rfJDazeRmwc",
             authDomain: "merodigear.firebaseapp.com",
@@ -75,7 +146,6 @@
         }
         const database = firebase.database();
 
-        // URLパラメータからIDを取得
         const params = new URLSearchParams(window.location.search);
         const targetId = params.get('id') || params.get('enemyId');
 
@@ -86,18 +156,15 @@
             }
 
             try {
-                // Firebaseの該当IDのデータを直接取得
                 const snapshot = await database.ref(`board_posts/${targetId}`).once('value');
                 const target = snapshot.val();
 
                 if (target && target.robot) {
-                    // アバター情報
                     if (target.avatar) {
                         document.getElementById('avatar').src = target.avatar.icon || "";
                         document.getElementById('pilot-name').innerText = target.avatar.name || "名無しパイロット";
                     }
 
-                    // 機体情報
                     document.getElementById('robot-name').innerText = target.robot.name || "無名機体";
                     document.getElementById('robot-level').innerText = target.robot.level || 1;
                     document.getElementById('robot-size').innerText = target.robot.size || "不明";
@@ -107,7 +174,6 @@
                     document.getElementById('robot-def').innerText = target.robot.def || 0;
                     document.getElementById('robot-spd').innerText = target.robot.spd || 0;
 
-                    // BGM情報
                     const bgm = target.robot.bgmData;
                     if (bgm) {
                         document.getElementById('bgm-title').innerText = bgm.title || "曲名なし";
@@ -119,10 +185,8 @@
                         document.getElementById('bgm-comment').innerText = "なし";
                     }
 
-                    // 機体描画
                     drawRobot(target.robot);
 
-                    // バトルボタンを表示してイベント設定
                     const battleBtn = document.getElementById('battle-btn');
                     if (battleBtn) {
                         battleBtn.style.display = 'block';
@@ -139,7 +203,6 @@
             }
         }
 
-        // バトル開始処理（一覧画面と共通）
         function startBattle(enemyRobotData, enemyAvatarData) {
             if (!enemyRobotData.bgmData) {
                 enemyRobotData.bgmData = {
@@ -174,7 +237,6 @@
             location.href = 'battle.html';
         }
 
-        // 機体描画関数
         function drawRobot(stats) {
             const canvas = document.getElementById('robot-visual');
             if (!canvas) return;
@@ -200,8 +262,8 @@
 
             shapes.forEach((s, i) => {
                 ctx.beginPath();
-                ctx.strokeStyle = stats.color || "#4ecca3";
-                ctx.fillStyle = stats.color || "#4ecca3";
+                ctx.strokeStyle = stats.color || "#00fff0";
+                ctx.fillStyle = stats.color || "#00fff0";
                 if (i === 2) ctx.lineWidth = Math.max(1, b);
                 else if (i >= 6) ctx.lineWidth = Math.max(1, a);
                 else if (i >= 3 && i <= 5) ctx.lineWidth = Math.max(1, l);
@@ -213,7 +275,6 @@
             });
         }
 
-        // ページ読み込み時にFirebaseからデータを引く
         loadTargetDetail();
     </script>
 </body>
