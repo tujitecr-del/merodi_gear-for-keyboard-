@@ -2,37 +2,143 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
+    <!-- スマホ対応のビューポート設定を追加 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>放置対戦募集掲示板</title>
     <style>
-        body { background: #1a1a2e; color: #4ecca3; font-family: sans-serif; padding: 20px; }
-        .controls { margin-bottom: 20px; display: flex; gap: 10px; }
-        #board-list { height: 400px; overflow-y: auto; border: 2px solid #4ecca3; padding: 10px; border-radius: 8px; }
-        .board-card {
+        body { 
+            background: #0f0f1a; 
+            color: #4ecca3; 
+            font-family: sans-serif; 
+            margin: 0;
+            padding: 15px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #1a1a2e;
+            border: 2px solid #4ecca3;
+            border-radius: 10px;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+        h2 {
+            font-size: 1.2rem;
+            text-align: center;
+            margin-top: 0;
+            color: #fff;
+            border-bottom: 1px dashed #4ecca3;
+            padding-bottom: 10px;
+        }
+        .header-actions {
+            margin-bottom: 15px;
+        }
+        .controls { 
+            margin-bottom: 15px; 
+            display: flex; 
+            flex-direction: column;
+            gap: 10px; 
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            background: #222;
+            color: #fff;
             border: 1px solid #4ecca3;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 0.95rem;
+        }
+        .sort-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .sort-buttons button {
+            flex: 1;
+            margin-top: 0;
+        }
+        button {
+            background: #333;
+            color: #4ecca3;
+            border: 1px solid #4ecca3;
+            padding: 10px 15px;
+            font-size: 0.95rem;
+            cursor: pointer;
+            border-radius: 6px;
+            font-weight: bold;
+            box-sizing: border-box;
+        }
+        button:hover { 
+            background: #4ecca3; 
+            color: #1a1a2e; 
+        }
+        #board-list { 
+            height: 400px; 
+            overflow-y: auto; 
+            border: 1px solid #4ecca3; 
+            padding: 10px; 
+            border-radius: 8px; 
+            background: #121220;
+            box-sizing: border-box;
+        }
+        .board-card {
+            border: 1px solid #334455;
             padding: 12px;
             margin-bottom: 10px;
             border-radius: 8px;
             background: #16213e;
         }
-        .card-header { font-size: 1.2rem; font-weight: bold; margin-bottom: 5px; }
-        .card-body { margin-bottom: 10px; font-size: 0.9rem; }
+        .card-header { 
+            font-size: 1rem; 
+            font-weight: bold; 
+            margin-bottom: 5px; 
+            color: #fff;
+            word-break: break-all;
+        }
+        .card-body { 
+            margin-bottom: 10px; 
+            font-size: 0.85rem; 
+            color: #aaa;
+        }
+        .card-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .card-actions button {
+            flex: 1;
+            padding: 8px;
+            font-size: 0.9rem;
+        }
+        .battle-btn {
+            background: #e94560 !important;
+            color: white !important;
+            border: 1px solid #ff6b81 !important;
+        }
+        .battle-btn:hover {
+            background: #ff6b81 !important;
+            color: #1a1a2e !important;
+        }
     </style>
 </head>
 <body>
-    <h2>対戦相手募集掲示板</h2>
+    <div class="container">
+        <h2>対戦相手募集掲示板</h2>
 
-    <div class="header-actions" style="margin-bottom: 10px;">
-        <button onclick="location.href='index.html'">◀ 基地へ戻る</button>
-    </div>
+        <div class="header-actions">
+            <button onclick="location.href='index.html'" style="background: #222; color: #aaa; border-color: #666; width: 100%;">◀ 基地へ戻る</button>
+        </div>
 
-    <div class="controls" style="margin-bottom: 20px;">
-        <input type="text" id="searchInput" placeholder="機体名で検索" oninput="renderBoard()">
-        <button onclick="sortBoard('newest')">最新順</button>
-        <button onclick="sortBoard('level')">Lv高い順</button>
-    </div>
+        <div class="controls">
+            <input type="text" id="searchInput" placeholder="機体名で検索" oninput="renderBoard()">
+            <div class="sort-buttons">
+                <button onclick="sortBoard('newest')">最新順</button>
+                <button onclick="sortBoard('level')">Lv高い順</button>
+            </div>
+        </div>
 
-    <div id="board-list">
-        <p>データを読み込み中...</p>
+        <div id="board-list">
+            <p style="text-align:center; color:#888;">データを読み込み中...</p>
+        </div>
     </div>
 
     <!-- Firebase SDK の読み込み -->
@@ -40,11 +146,10 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
     <script>
-        // Firebase初期化（databaseURLを追加しました）
         const firebaseConfig = {
             apiKey: "AIzaSyCJ5h0o9RdNf19wJYXQRzd7rfJDazeRmwc",
             authDomain: "merodigear.firebaseapp.com",
-            databaseURL: "https://merodigear-e4e97-default-rtdb.asia-southeast1.firebasedatabase.app", // ★追加
+            databaseURL: "https://merodigear-e4e97-default-rtdb.asia-southeast1.firebasedatabase.app",
             projectId: "merodigear",
             storageBucket: "merodigear.firebasestorage.app",
             messagingSenderId: "863493263922",
@@ -65,17 +170,15 @@
             return rating.toFixed(1);
         }
 
-        // 著作権NG楽曲リスト
         const BANNED_SONGS = ["著作権的にまずい曲名A", "著作権的にまずい曲名B"];
         const MAX_DISPLAY_COUNT = 300; 
 
         let currentSortMode = 'newest';
         let cachedPosts = []; 
 
-        // Firebaseからデータを取得して描画する
         async function fetchAndRenderBoard() {
             const list = document.getElementById('board-list');
-            list.innerHTML = "<p>読み込み中...</p>";
+            list.innerHTML = "<p style='text-align:center; color:#888;'>読み込み中...</p>";
 
             try {
                 const snapshot = await database.ref('board_posts').once('value');
@@ -92,7 +195,7 @@
                 renderBoard();
             } catch (error) {
                 console.error("データ取得エラー:", error);
-                list.innerHTML = "<p>データの読み込みに失敗しました。</p>";
+                list.innerHTML = "<p style='text-align:center; color:#ff6b6b;'>データの読み込みに失敗しました。</p>";
             }
         }
 
@@ -101,19 +204,16 @@
             const searchKeyword = document.getElementById('searchInput').value.toLowerCase();
             let allPosts = [...cachedPosts];
 
-            // --- 1. ソート処理 ---
             if (currentSortMode === 'newest') {
                 allPosts.sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
             } else if (currentSortMode === 'level') {
                 allPosts.sort((a, b) => (b.robot?.level || 1) - (a.robot?.level || 1));
             }
 
-            // --- 2. 検索 & 目隠しフィルターの適用 ---
             const displayList = allPosts
                 .filter(post => {
                     if (!post.robot) return false;
                     
-                    // ★ BGMタイトルの参照先を修正 (post.robot.bgmData.title)
                     const title = post.robot.bgmData?.title;
                     if (title && BANNED_SONGS.includes(title)) return false;
 
@@ -125,7 +225,7 @@
                 .slice(0, MAX_DISPLAY_COUNT);
 
             if (displayList.length === 0) {
-                list.innerHTML = "<p>該当する対戦相手がいません。</p>";
+                list.innerHTML = "<p style='text-align:center; color:#888;'>該当する対戦相手がいません。</p>";
                 return;
             }
 
@@ -136,14 +236,15 @@
                 card.className = 'board-card';
                 card.innerHTML = `
                     <div class="card-header">
-                        電脳Lv.${e.robot.level || 1} | 総合評価: ${calculateOverallRating(e.robot.atk, e.robot.def, e.robot.spd, e.robot.level)} | ${e.robot.name}
+                        Lv.${e.robot.level || 1} / 評価:${calculateOverallRating(e.robot.atk, e.robot.def, e.robot.spd, e.robot.level)}<br>
+                        ${e.robot.name}
                     </div>
                     <div class="card-body">
-                        <p>パイロット: ${e.avatar?.name || "名無し"}</p>
+                        パイロット: ${e.avatar?.name || "名無し"}
                     </div>
-                    <div>
-                        <button class="detail-btn">詳細を見る</button>
-                        <button class="battle-btn" style="background: #e94560; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 4px;">バトる</button>
+                    <div class="card-actions">
+                        <button class="detail-btn">詳細</button>
+                        <button class="battle-btn">バトる</button>
                     </div>
                 `;
 
