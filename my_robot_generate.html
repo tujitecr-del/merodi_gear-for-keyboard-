@@ -2,11 +2,61 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>機体生成</title>
     <style>
-        body { background: #000; color: #fff; font-family: sans-serif; text-align: center; }
-        canvas { background: #111; border: 1px solid #333; margin-top:10px; }
-        .ui-panel { margin: 20px auto; width: 400px; text-align: left; background: #222; padding: 15px; border-radius: 10px; }
+        body { 
+            background: #000; 
+            color: #fff; 
+            font-family: sans-serif; 
+            text-align: center; 
+            margin: 0; 
+            padding: 10px; 
+        }
+        h1 {
+            font-size: 1.5rem;
+            margin: 10px 0;
+        }
+        canvas { 
+            background: #111; 
+            border: 1px solid #333; 
+            margin-top: 10px; 
+            max-width: 100%; 
+            height: auto; 
+        }
+        .ui-panel, .input-panel { 
+            margin: 15px auto; 
+            max-width: 400px; 
+            width: 100%; 
+            box-sizing: border-box;
+            text-align: left; 
+            background: #222; 
+            padding: 15px; 
+            border-radius: 10px; 
+        }
+        .action-panel {
+            margin: 20px auto;
+            max-width: 400px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        button {
+            padding: 10px 15px;
+            font-size: 1rem;
+            cursor: pointer;
+            border-radius: 5px;
+            border: none;
+            background: #4ecca3;
+            color: #000;
+            font-weight: bold;
+            margin: 5px;
+        }
+        button:active {
+            opacity: 0.8;
+        }
+        select, input[type="file"] {
+            font-size: 0.9rem;
+        }
     </style>
 </head>
 <body>
@@ -21,19 +71,19 @@
         <p>DEF: <span id="val-def">-</span> / ATK: <span id="val-atk">-</span> / SPD: <span id="val-spd">-</span></p>
     </div>
 
-    <div style="width: 400px; margin: 0 auto; text-align: left; background: #222; padding: 15px; border-radius: 10px;">
-        <p>【方法1】音楽ファイル(.melogefile / 音声)を選ぶ</p>
-        <input type="file" id="audioFile" accept="audio/*, .melogefile">
+    <div class="input-panel">
+        <p style="margin-top:0;">【方法1】音楽ファイル(.melogefile / 音声)を選ぶ</p>
+        <input type="file" id="audioFile" accept="audio/*, .melogefile" style="width: 100%; box-sizing: border-box;">
 
         <p style="margin-top: 15px;">【方法2】獲得済みコレクションから選ぶ</p>
-        <select id="collectionSelect" onchange="selectBgmFromCollection(this.value)" style="width: 100%; padding: 5px;">
+        <select id="collectionSelect" onchange="selectBgmFromCollection(this.value)" style="width: 100%; padding: 8px; box-sizing: border-box;">
             <option value="">-- 取得済みBGMを選択 --</option>
         </select>
     </div>
 
-    <div style="margin-top: 20px;">
+    <div class="action-panel">
         <button id="deployBtn">上書き・保存</button>
-        <button onclick="location.href='my_robot_manage.html?id=' + (new URLSearchParams(window.location.search).get('id') || '0')">戻る</button>
+        <button onclick="location.href='my_robot_manage.html?id=' + (new URLSearchParams(window.location.search).get('id') || '0')" style="background: #666; color: #fff;">戻る</button>
     </div>
 
     <script>
